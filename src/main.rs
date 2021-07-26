@@ -7,6 +7,7 @@
 //! <li>gui</li>
 //! </ul>
 
+mod bindings;
 mod event;
 mod gui;
 mod stat;
