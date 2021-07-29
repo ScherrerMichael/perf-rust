@@ -2,7 +2,7 @@
 use iced::{
     executor, pane_grid,
     widget::{
-        Button, Column, Container, PaneGrid, PickList, Row, Rule, Scrollable, Text, TextInput,
+        Button, Column, Container, PaneGrid, PickList, Scrollable, Text, TextInput, Space,
     },
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
@@ -94,7 +94,17 @@ impl Application for Gui {
 
                 match message {
                     Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
+                        if state.horz_split == split
+                        {
+                            // println!("horizontal split");
+                        }
+                        else
+                        {
+                            // println!("vertical split");
+                        }
+
                         state.panes_state.resize(&split, ratio);
+                        // println!("split: {:?}, ratio: {}",split, ratio);
                     }
 
                     Message::NewAppPressed => {
@@ -208,7 +218,6 @@ impl Application for Gui {
             Gui::Loading => loading_message(),
             Gui::Loaded(State {
                 panes_state,
-                panes_created,
                 ..
             }) => {
                 // Iterate entire pane grid and display each
@@ -287,21 +296,24 @@ impl Application for Gui {
                                     .padding(5)
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
-                                    .push(Column::with_children(vec![
-                                        scrollable_list.into(),
-                                        Rule::horizontal(100).into(),
+                                    .push(
+                                        scrollable_list.push(Column::with_children(vec![
+                                        // Rule::horizontal(100).into(),
+                                        Space::new(Length::Fill, Length::from(100)).into(),
                                         Text::new("Program to run:").into(),
                                         input.into(),
-                                        Rule::horizontal(100).into(),
+                                        // Rule::horizontal(100).into(),
+                                        Space::new(Length::Fill, Length::from(100)).into(),
                                         Text::new("Options:").into(),
-                                        Rule::horizontal(100).into(),
+                                        // Rule::horizontal(100).into(),
+                                        Space::new(Length::Fill, Length::from(100)).into(),
                                         Button::new(
                                             &mut content.launch_button,
                                             Text::new("Launch"),
                                         )
                                         .on_press(Message::LaunchCommand)
                                         .into(),
-                                    ])),
+                                    ]))),
                             ),
                         },
                         // Log pane
@@ -320,7 +332,7 @@ impl Application for Gui {
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .on_resize(10, Message::Resized)
-                .spacing(10);
+                .spacing(7);
 
                 // Collect all panes and add them to main Gui element
                 let content = Column::new()

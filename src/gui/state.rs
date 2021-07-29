@@ -10,6 +10,8 @@ pub struct State {
     pub data_pane: pane_grid::Pane,
     pub log_pane: pane_grid::Pane,
     pub task_pane: pane_grid::Pane,
+    pub vert_split: pane_grid::Split,
+    pub horz_split: pane_grid::Split,
 }
 
 /// Default state for Gui
@@ -51,6 +53,8 @@ impl Default for State {
             data_pane,
             task_pane,
             log_pane,
+            vert_split,
+            horz_split,
         }
     }
 }
