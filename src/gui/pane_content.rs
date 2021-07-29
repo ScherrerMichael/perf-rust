@@ -10,7 +10,6 @@ pub struct Content {
     pub selected_command: PerfEvent,
     pub scroll: scrollable::State,
     pub pick_list: pick_list::State<PerfEvent>,
-    pub id: usize,
     pub data: String,
     pub application: String,
     pub pane_type: PaneType,
@@ -21,7 +20,7 @@ pub struct Content {
 
 /// Initialize pane states to default values
 impl Content {
-    pub fn new(pane_type: PaneType, id: usize) -> Self {
+    pub fn new(pane_type: PaneType) -> Self {
         Content {
             input_value: String::new(),
             input: text_input::State::new(),
@@ -29,7 +28,6 @@ impl Content {
             scroll: scrollable::State::new(),
             pick_list: pick_list::State::default(),
             pane_type,
-            id,
             data: String::new(),
             create_button: button::State::new(),
             launch_button: button::State::new(),

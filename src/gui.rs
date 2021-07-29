@@ -136,6 +136,8 @@ impl Application for Gui {
                     }
 
                     Message::LaunchCommand => {
+                        use std::process::Command;
+                        use std::str;
                         match data_state.selected_command {
                             PerfEvent::Stat => {
                                 //TODO: Add program here
@@ -159,11 +161,31 @@ impl Application for Gui {
                             }
                             PerfEvent::Bench => {
                                 //TODO: Add program here
-                                data_state.data = format!("Bench output:");
+                                // data_state.data = format!("Bench output:");
                             }
                             PerfEvent::Test => {
-                                data_state.data = format!("Test output:");
                                 //TODO: Add program here
+
+                                //create another process, in this case run another perf-rust
+                                //with command: test
+                                let output = Command::new("./perf-rust")
+                                    .arg("help")
+                                    .output()
+                                    .expect("failed to execute process");
+
+                                // Create buffer variable
+                                let buf = &output.stdout;
+
+                                // Convert &vec[u8] into string
+                                let s = match str::from_utf8(buf) {
+                                    Ok(v) => v,
+                                    Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+                                };
+
+                                //Will panic here:
+                                data_state.data = s.to_string();
+
+                                println!("output: {}", s);
                             }
                         }
 
@@ -192,8 +214,7 @@ impl Application for Gui {
                 // Iterate entire pane grid and display each
                 // with thier own content
                 let panes = PaneGrid::new(panes_state, |pane, content| {
-                    let title = Row::with_children(vec![Text::new(content.id.to_string()).into()])
-                        .spacing(5);
+                    let title = Text::new("");
 
                     // Title of pane
                     let title_bar = pane_grid::TitleBar::new(title).padding(10);
@@ -294,7 +315,7 @@ impl Application for Gui {
                         ),
                     })
                     .title_bar(title_bar)
-                    .style(style::widget::Pane { is_focused: true })
+                    .style(style::widget::Pane { is_focused: false})
                 })
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -307,12 +328,14 @@ impl Application for Gui {
                     .padding(5)
                     .width(Length::Fill)
                     .align_items(Align::Center)
+                    .push(Text::new("test"))
                     .push(panes);
 
                 // Display all widget elements
                 Container::new(content)
                     .width(Length::Fill)
                     .height(Length::Fill)
+                    .style(style::widget::Container{})
                     .into()
             }
         }

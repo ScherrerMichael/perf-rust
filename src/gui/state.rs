@@ -17,7 +17,7 @@ impl Default for State {
     fn default() -> Self {
         // First pane and first state is created here:
         // task Pane, panes_state
-        let (mut panes_state, task_pane) = pane_grid::State::new(Content::new(PaneType::Task, 0));
+        let (mut panes_state, task_pane) = pane_grid::State::new(Content::new(PaneType::Task));
 
         // Second pane and first split is created here:
         // data_pane, vert_split
@@ -25,7 +25,7 @@ impl Default for State {
             .split(
                 pane_grid::Axis::Vertical,
                 &task_pane,
-                Content::new(PaneType::Main, 1),
+                Content::new(PaneType::Main),
             )
             .unwrap();
 
@@ -35,7 +35,7 @@ impl Default for State {
             .split(
                 pane_grid::Axis::Horizontal,
                 &data_pane,
-                Content::new(PaneType::Log, 2),
+                Content::new(PaneType::Log),
             )
             .unwrap();
 
