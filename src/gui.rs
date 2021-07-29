@@ -1,9 +1,7 @@
 //! Gui driver
 use iced::{
     executor, pane_grid,
-    widget::{
-        Button, Column, Container, PaneGrid, PickList, Scrollable, Text, TextInput, Space,
-    },
+    widget::{Button, Column, Container, PaneGrid, PickList, Scrollable, Space, Text, TextInput},
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
 
@@ -94,12 +92,9 @@ impl Application for Gui {
 
                 match message {
                     Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
-                        if state.horz_split == split
-                        {
+                        if state.horz_split == split {
                             // println!("horizontal split");
-                        }
-                        else
-                        {
+                        } else {
                             // println!("vertical split");
                         }
 
@@ -216,10 +211,7 @@ impl Application for Gui {
     fn view(&mut self) -> Element<Self::Message> {
         match self {
             Gui::Loading => loading_message(),
-            Gui::Loaded(State {
-                panes_state,
-                ..
-            }) => {
+            Gui::Loaded(State { panes_state, .. }) => {
                 // Iterate entire pane grid and display each
                 // with thier own content
                 let panes = PaneGrid::new(panes_state, |pane, content| {
@@ -269,6 +261,7 @@ impl Application for Gui {
                                 .align_items(Align::Start)
                                 .push(
                                     Button::new(&mut content.create_button, Text::new("new"))
+                                        .style(style::widget::Button{})
                                         .on_press(Message::NewAppPressed)
                                         .width(Length::FillPortion(100)),
                                 ),
@@ -296,8 +289,7 @@ impl Application for Gui {
                                     .padding(5)
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
-                                    .push(
-                                        scrollable_list.push(Column::with_children(vec![
+                                    .push(scrollable_list.push(Column::with_children(vec![
                                         // Rule::horizontal(100).into(),
                                         Space::new(Length::Fill, Length::from(100)).into(),
                                         Text::new("Program to run:").into(),
@@ -312,6 +304,7 @@ impl Application for Gui {
                                             Text::new("Launch"),
                                         )
                                         .on_press(Message::LaunchCommand)
+                                        .style(style::widget::Button{})
                                         .into(),
                                     ]))),
                             ),
@@ -327,7 +320,7 @@ impl Application for Gui {
                         ),
                     })
                     .title_bar(title_bar)
-                    .style(style::widget::Pane { is_focused: false})
+                    .style(style::widget::Pane { is_focused: false })
                 })
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -347,7 +340,7 @@ impl Application for Gui {
                 Container::new(content)
                     .width(Length::Fill)
                     .height(Length::Fill)
-                    .style(style::widget::Container{})
+                    .style(style::widget::Container {})
                     .into()
             }
         }

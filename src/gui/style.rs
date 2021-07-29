@@ -1,6 +1,6 @@
 /// Widget Style
 pub mod widget {
-    use iced::{container, Background, Color};
+    use iced::{container, button, Background, Color, Vector};
 
     pub const SURFACE: Color = Color::from_rgb(
         0x54 as f32 / 255.0,
@@ -18,10 +18,6 @@ pub mod widget {
         pub is_focused: bool,
     }
 
-    pub struct Container {
-        
-    }
-
     impl container::StyleSheet for Pane {
         fn style(&self) -> container::Style {
             container::Style {
@@ -37,6 +33,8 @@ pub mod widget {
         }
     }
 
+    pub struct Container {}
+
     impl container::StyleSheet for Container {
         fn style(&self) -> container::Style {
             container::Style {
@@ -45,4 +43,20 @@ pub mod widget {
             }
         }
     }
+
+    pub struct Button{}
+
+    impl button::StyleSheet for Button {
+        fn active(&self) -> button::Style{
+            button::Style{
+                background: Some(Background::Color(FRONT)),
+                border_radius: 1.3,
+                border_width: 1.0,
+                border_color: Color::BLACK,
+                text_color: Color::WHITE,
+                shadow_offset: Vector::new(1.0, 1.0),
+            }
+        }
+    }
+
 }
