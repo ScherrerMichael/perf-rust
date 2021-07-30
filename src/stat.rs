@@ -1,8 +1,12 @@
 //! Stat driver
 use crate::event::open::*;
 use crate::utils::ParseError;
-use std::str::FromStr;
+use std::str::{self, FromStr};
 extern crate structopt;
+use os_pipe::pipe;
+use std::io::prelude::*;
+use std::os::unix::process::CommandExt;
+use std::process::Command;
 use structopt::StructOpt;
 
 /// Supported events
@@ -24,6 +28,16 @@ impl FromStr for StatEvent {
     }
 }
 
+/// Match on each supported event to parse from command line
+impl ToString for StatEvent {
+    fn to_string(&self) -> String {
+        match self {
+            StatEvent::Cycles => "cycles".to_string(),
+            StatEvent::Instructions => "instructions".to_string(),
+        }
+    }
+}
+
 /// Configuration settings for running stat
 #[derive(Debug, StructOpt)]
 pub struct StatOptions {
@@ -36,32 +50,92 @@ pub struct StatOptions {
     pub command: Vec<String>,
 }
 
+fn launch_command_process(
+    command: Vec<String>,
+    mut child_reader: os_pipe::PipeReader,
+    mut child_writer: os_pipe::PipeWriter,
+) -> i32 {
+    match unsafe { libc::fork() as i32 } {
+        0 => {
+            //set up command to execute and initialize read buffer
+            let mut buf = [0];
+            let mut comm = Command::new(&command[0]);
+            comm.args(&command[1..]);
+
+            // Tell parent program child is set up to execute
+            child_writer.write_all(&[1]).unwrap();
+            drop(child_writer);
+
+            //hear from parent that counters are set up
+            let nread = child_reader.read(&mut buf).unwrap();
+            assert_eq!(nread, 1);
+
+            let e = comm.exec();
+            panic!("child command failed: {}", e);
+        }
+        pid_child => pid_child,
+    }
+}
+
 /// Run perf stat on the given command and event combinations. Currently starts and stops a cycles timer in serial for each event specified.
 pub fn run_stat(options: &StatOptions) {
-    println!("{:?}:\n {:?}", options.command, options.event);
     //demonstrating from cli. In future rather than starting and stopping counter in series for each event, events will have the ability to be added in groups that will coordinate their timing.
+    struct EventCounter {
+        event: Event,
+        start: isize,
+        stop: isize,
+    }
+
+    let mut event_list: Vec<EventCounter> = Vec::new();
+
+    let (reader, mut writer) = pipe().unwrap();
+    let (mut parent_reader, parent_writer) = pipe().unwrap();
+
+    let child_reader = reader.try_clone().unwrap();
+    let child_writer = parent_writer.try_clone().unwrap();
+    let pid_child = launch_command_process(options.command.clone(), child_reader, child_writer);
+
     for event in &options.event {
-        let e = Event::new(*event);
-        let cnt: isize = e.start_counter().unwrap();
-        let mut sum = 0;
-        let additions = 1000000;
-        for i in 0..additions {
-            if i % 2 == 0 {
-                sum += 1;
-            } else {
-                sum -= 1;
-            }
-        }
-        let final_cnt = e.stop_counter().unwrap();
-        let total_cnt = final_cnt - cnt;
-        println!("Counter value for {:?}: {} at start\n", event, cnt);
+        event_list.push(EventCounter {
+            event: Event::new(*event, Some(pid_child)),
+            start: 0,
+            stop: 0,
+        });
+    }
+
+    // Wait for child to say it is set up to execute
+    let mut buf = [0];
+    let nread = parent_reader.read(&mut buf).unwrap();
+    assert_eq!(nread, 1);
+
+    for e in event_list.iter_mut() {
+        e.start = e.event.start_counter().unwrap();
+    }
+
+    // Notify child counters are set up
+    writer.write_all(&[1]).unwrap();
+    drop(writer);
+
+    //wait for process to exit
+    let mut status: libc::c_int = 0;
+    let result = unsafe { libc::waitpid(pid_child, (&mut status) as *mut libc::c_int, 0) };
+    assert_eq!(result, pid_child);
+    assert_eq!(status, 0);
+
+    for e in event_list.iter_mut() {
+        e.stop = e.event.stop_counter().unwrap();
+    }
+
+    //output command's output
+    println!(
+        "Performance counter stats for '{}'\n",
+        options.command.get(0).unwrap()
+    );
+    for event in event_list {
         println!(
-            "Counter value for {:?}: {} at stop after counting to {}\nNumber of cycles: {}\n",
-            event, final_cnt, sum, total_cnt
-        );
-        println!(
-            "Performed {:?} additions per cycle",
-            additions as f64 / total_cnt as f64
+            " Number of {}: {}\n",
+            event.event.event.to_string(),
+            event.stop - event.start
         );
     }
 }

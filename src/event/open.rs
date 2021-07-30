@@ -1,8 +1,8 @@
 //! An `Event` abstracts away
-//! initializing `perf_event_attr` 
+//! initializing `perf_event_attr`
 //! structs for arbitrary events;
-//! and the need to use `FileDesc` methods 
-//! for interacting with `perf_event` 
+//! and the need to use `FileDesc` methods
+//! for interacting with `perf_event`
 //! related file descriptors.
 
 use crate::bindings::*;
@@ -51,9 +51,9 @@ pub fn event_open(event: &StatEvent) -> Result<perf_event_attr, EventErr> {
 
 impl Event {
     /// Construct a new event
-    pub fn new(event: StatEvent) -> Self {
+    pub fn new(event: StatEvent, pid: Option<i32>) -> Self {
         let e: &mut perf_event_attr = &mut event_open(&event).unwrap();
-        let fd = fd::FileDesc::new(e, 0, -1, -1);
+        let fd = fd::FileDesc::new(e, pid, -1, -1);
         Self { fd, event }
     }
 
@@ -77,7 +77,7 @@ impl Event {
 #[cfg(test)]
 #[test]
 fn cycles_open_test() {
-    let event = Event::new(StatEvent::Cycles);
+    let event = Event::new(StatEvent::Cycles, None);
     let cnt: isize = event.start_counter().unwrap();
     assert_ne!(cnt, 0);
     assert_ne!(cnt, -1);
@@ -88,7 +88,7 @@ fn cycles_open_test() {
 
 #[test]
 fn inst_open_test() {
-    let event = Event::new(StatEvent::Instructions);
+    let event = Event::new(StatEvent::Instructions, None);
     let cnt: isize = event.start_counter().unwrap();
     assert_ne!(cnt, 0);
     assert_ne!(cnt, -1);
