@@ -4,6 +4,8 @@ use crate::gui::PerfEvent;
 use iced::{button, pick_list, scrollable, text_input};
 use serde::{Deserialize, Serialize};
 
+use crate::gui::*;
+
 pub struct Content {
     pub input_value: String,
     pub input: text_input::State,
@@ -16,6 +18,7 @@ pub struct Content {
     pub create_button: button::State,
     pub launch_button: button::State,
     pub context: Context,
+    pub launch_options: Options,
 }
 
 /// Initialize pane states to default values
@@ -33,6 +36,7 @@ impl Content {
             launch_button: button::State::new(),
             application: String::new(),
             context: Context::Main,
+            launch_options: Options::default(),
         }
     }
 }
@@ -56,4 +60,36 @@ pub struct Task {
     name: String,
     application: String,
     options: Vec<String>,
+}
+
+pub struct Options {
+    pub cycles: bool,
+    pub instructions: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self{
+        Options{
+            cycles: false,
+            instructions: false,
+        }
+    }
+}
+
+impl Options{
+
+    pub fn get_options(&self) -> String{
+        let mut res = String::new();
+
+        if self.cycles == true{
+            res.push_str(" --event cycles");
+        }
+        if self.instructions == true{
+            res.push_str(" --event instructions");
+        }
+        res.push(' ');
+
+        res
+    }
+
 }

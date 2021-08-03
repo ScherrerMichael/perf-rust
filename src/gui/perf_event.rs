@@ -26,7 +26,7 @@ impl PerfEvent {
 /// Default PerfEvent
 impl Default for PerfEvent {
     fn default() -> PerfEvent {
-        PerfEvent::Test
+        PerfEvent::Stat
     }
 }
 
@@ -44,6 +44,26 @@ impl std::fmt::Display for PerfEvent {
                 PerfEvent::Stat => "Stat",
                 PerfEvent::Test => "Test",
                 PerfEvent::Top => "Top",
+            }
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EventOption {
+    Cycles,
+    Instructions,
+}
+
+/// Provide EventOptions as String data types
+impl std::fmt::Display for EventOption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                EventOption::Cycles => "Cyles",
+                EventOption::Instructions => "Instructions",
             }
         )
     }

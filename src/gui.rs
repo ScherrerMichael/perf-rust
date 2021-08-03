@@ -1,7 +1,7 @@
 //! Gui driver
 use iced::{
     executor, pane_grid,
-    widget::{Button, Column, Container, PaneGrid, PickList, Scrollable, Space, Text, TextInput},
+    widget::{Button, Column, Container, Checkbox, PaneGrid, PickList, Scrollable, Space, Rule, Text, TextInput},
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
 
@@ -37,6 +37,8 @@ enum Message {
     NewAppPressed,
     Resized(pane_grid::ResizeEvent),
     CommandSelected(PerfEvent),
+    CyclesToggled(bool),
+    InstructionsToggled(bool),
     LaunchCommand,
 }
 /// Provide methods for Gui renderer
@@ -136,6 +138,14 @@ impl Application for Gui {
                         println!("test selected")
                     }
 
+                    Message::CyclesToggled(value) => {
+                        data_state.launch_options.cycles = value;
+                    }
+
+                    Message::InstructionsToggled(value) => {
+                        data_state.launch_options.instructions = value;
+                    }
+
                     Message::InputChanged(value) => {
                         data_state.input_value = value;
                     }
@@ -146,7 +156,7 @@ impl Application for Gui {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
                                 //TODO: Add program here
-                                data_state.data = format!("Stat output:");
+                                data_state.data = format!("program recieved: {}", data_state.input_value);
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
@@ -173,10 +183,20 @@ impl Application for Gui {
 
                                 //create another process, in this case run another perf-rust
                                 //with command: test
-                                let output = Command::new("./perf-rust")
-                                    .arg("help")
-                                    .output()
-                                    .expect("failed to execute process");
+                                let mut run_command = String::new();
+                                run_command.push_str("stat");
+                                run_command.push_str(
+                                    data_state.launch_options.get_options().as_str());
+                                run_command.push_str(
+                                    data_state.input_value.as_str()
+                                );
+
+                                println!("splitted: {:?}", run_command);
+
+                                let output = Command::new("./ruperf")
+                                .args(run_command.split(' '))
+                                .output()
+                                .expect("failed to execute process");
 
                                 // Create buffer variable
                                 let buf = &output.stdout;
@@ -290,15 +310,17 @@ impl Application for Gui {
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
                                     .push(scrollable_list.push(Column::with_children(vec![
-                                        // Rule::horizontal(100).into(),
-                                        Space::new(Length::Fill, Length::from(100)).into(),
-                                        Text::new("Program to run:").into(),
+                                        Rule::horizontal(100).into(),
+                                        // Space::new(Length::Fill, Length::from(100)).into(),
+                                        // Text::new("Program to run:").into(),
                                         input.into(),
-                                        // Rule::horizontal(100).into(),
-                                        Space::new(Length::Fill, Length::from(100)).into(),
-                                        Text::new("Options:").into(),
-                                        // Rule::horizontal(100).into(),
-                                        Space::new(Length::Fill, Length::from(100)).into(),
+                                        Rule::horizontal(100).into(),
+                                        // Text::new("Options:").into(),
+                                        Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled).into(), //TODO: figure out why not showing
+                                        Space::new(Length::Fill, Length::from(10)).into(),
+                                        Checkbox::new(content.launch_options.instructions, "Instructions", Message::InstructionsToggled).into(), //TODO: figure out why not showing
+                                        Rule::horizontal(100).into(),
+                                        // Space::new(Length::Fill, Length::from(100)).into(),
                                         Button::new(
                                             &mut content.launch_button,
                                             Text::new("Launch"),
@@ -354,4 +376,9 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .height(Length::Fill)
         .center_y()
         .into()
+}
+
+fn run_program_with_options(event: PerfEvent, options: String, program: String)
+{
+
 }
