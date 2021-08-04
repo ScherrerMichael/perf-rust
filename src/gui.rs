@@ -1,7 +1,10 @@
 //! Gui driver
 use iced::{
     executor, pane_grid,
-    widget::{Button, Column, Container, Checkbox, PaneGrid, PickList, Scrollable, Space, Rule, Text, TextInput},
+    widget::{
+        Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
+        TextInput,
+    },
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
 
@@ -156,7 +159,8 @@ impl Application for Gui {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
                                 //TODO: Add program here
-                                data_state.data = format!("program recieved: {}", data_state.input_value);
+                                data_state.data =
+                                    format!("program recieved: {}", data_state.input_value);
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
@@ -185,18 +189,16 @@ impl Application for Gui {
                                 //with command: test
                                 let mut run_command = String::new();
                                 run_command.push_str("stat");
-                                run_command.push_str(
-                                    data_state.launch_options.get_options().as_str());
-                                run_command.push_str(
-                                    data_state.input_value.as_str()
-                                );
+                                run_command
+                                    .push_str(data_state.launch_options.get_options().as_str());
+                                run_command.push_str(data_state.input_value.as_str());
 
                                 println!("splitted: {:?}", run_command);
 
                                 let output = Command::new("./ruperf")
-                                .args(run_command.split(' '))
-                                .output()
-                                .expect("failed to execute process");
+                                    .args(run_command.split(' '))
+                                    .output()
+                                    .expect("failed to execute process");
 
                                 // Create buffer variable
                                 let buf = &output.stdout;
@@ -281,7 +283,7 @@ impl Application for Gui {
                                 .align_items(Align::Start)
                                 .push(
                                     Button::new(&mut content.create_button, Text::new("new"))
-                                        .style(style::widget::Button{})
+                                        .style(style::widget::Button {})
                                         .on_press(Message::NewAppPressed)
                                         .width(Length::FillPortion(100)),
                                 ),
@@ -378,7 +380,4 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .into()
 }
 
-fn run_program_with_options(event: PerfEvent, options: String, program: String)
-{
-
-}
+fn run_program_with_options(event: PerfEvent, options: String, program: String) {}

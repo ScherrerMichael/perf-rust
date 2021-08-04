@@ -68,28 +68,26 @@ pub struct Options {
 }
 
 impl Default for Options {
-    fn default() -> Self{
-        Options{
+    fn default() -> Self {
+        Options {
             cycles: false,
             instructions: false,
         }
     }
 }
 
-impl Options{
-
-    pub fn get_options(&self) -> String{
+impl Options {
+    pub fn get_options(&self) -> String {
         let mut res = String::new();
 
-        if self.cycles == true{
+        if self.cycles == true {
             res.push_str(" --event cycles");
         }
-        if self.instructions == true{
+        if self.instructions == true {
             res.push_str(" --event instructions");
         }
         res.push(' ');
 
         res
     }
-
 }
