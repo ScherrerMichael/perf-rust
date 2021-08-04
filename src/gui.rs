@@ -8,13 +8,13 @@ use iced::{
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
 
-mod pane_content;
+mod pane_state;
 mod perf_event;
 mod save_state;
 mod state;
 mod style;
 
-use pane_content::*;
+use pane_state::*;
 use perf_event::*;
 use save_state::*;
 use state::*;
