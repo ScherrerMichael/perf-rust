@@ -58,4 +58,7 @@ pub mod widget {
             }
         }
     }
+
+    pub const TextColor:Color = Color::WHITE;
+
 }

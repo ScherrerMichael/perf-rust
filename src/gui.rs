@@ -159,31 +159,6 @@ impl Application for Gui {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
                                 //TODO: Add program here
-                                data_state.data =
-                                    format!("program recieved: {}", data_state.input_value);
-                            }
-                            PerfEvent::Record => {
-                                //TODO: Add program here
-                                data_state.data = format!("Record output:");
-                            }
-                            PerfEvent::Report => {
-                                //TODO: Add program here
-                                data_state.data = format!("Report output:");
-                            }
-                            PerfEvent::Annotate => {
-                                //TODO: Add program here
-                                data_state.data = format!("Annotate output:");
-                            }
-                            PerfEvent::Top => {
-                                //TODO: Add program here
-                                data_state.data = format!("Top output:");
-                            }
-                            PerfEvent::Bench => {
-                                //TODO: Add program here
-                                // data_state.data = format!("Bench output:");
-                            }
-                            PerfEvent::Test => {
-                                //TODO: Add program here
 
                                 //create another process, in this case run another perf-rust
                                 //with command: test
@@ -209,10 +184,35 @@ impl Application for Gui {
                                     Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
                                 };
 
-                                //Will panic here:
+                                //output to data pane
                                 data_state.data = s.to_string();
 
                                 println!("output: {}", s);
+                            }
+                            PerfEvent::Record => {
+                                //TODO: Add program here
+                                data_state.data = format!("Record output:");
+                            }
+                            PerfEvent::Report => {
+                                //TODO: Add program here
+                                data_state.data = format!("Report output:");
+                            }
+                            PerfEvent::Annotate => {
+                                //TODO: Add program here
+                                data_state.data = format!("Annotate output:");
+                            }
+                            PerfEvent::Top => {
+                                //TODO: Add program here
+                                data_state.data = format!("Top output:");
+                            }
+                            PerfEvent::Bench => {
+                                //TODO: Add program here
+                                data_state.data = format!("Bench output:");
+                            }
+                            PerfEvent::Test => {
+                                //TODO: Add program here
+                                data_state.data = format!("Test output:");
+
                             }
                         }
 
@@ -255,7 +255,8 @@ impl Application for Gui {
                         .width(Length::Fill)
                         .align_items(Align::Start)
                         .spacing(10)
-                        .push(Text::new("Select a program to run"))
+                        .push(Text::new("Select a program to run")
+                            .color(style::widget::TextColor))
                         .push(list);
 
                     // Initialize Input field
@@ -302,7 +303,8 @@ impl Application for Gui {
                                     .padding(5)
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
-                                    .push(Text::new(&content.data)),
+                                    .push(Text::new(&content.data)
+                                    .color(style::widget::TextColor)),
                             ),
 
                             Context::NewEvent => Container::new(
@@ -379,5 +381,3 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .center_y()
         .into()
 }
-
-fn run_program_with_options(event: PerfEvent, options: String, program: String) {}
