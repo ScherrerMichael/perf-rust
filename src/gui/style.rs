@@ -59,6 +59,6 @@ pub mod widget {
         }
     }
 
-    pub const TextColor:Color = Color::WHITE;
+    pub const TEXT_COLOR:Color = Color::WHITE;
 
 }

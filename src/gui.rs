@@ -42,6 +42,9 @@ enum Message {
     CommandSelected(PerfEvent),
     CyclesToggled(bool),
     InstructionsToggled(bool),
+    JsonToggled(bool),
+    ListToggled(bool),
+    VerboseToggled(bool),
     LaunchCommand,
 }
 /// Provide methods for Gui renderer
@@ -93,7 +96,7 @@ impl Application for Gui {
             Gui::Loaded(state) => {
                 let mut saved = false;
 
-                let data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
+                let mut data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
 
                 match message {
                     Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
@@ -141,6 +144,8 @@ impl Application for Gui {
                         println!("test selected")
                     }
 
+                    // Stat Options
+
                     Message::CyclesToggled(value) => {
                         data_state.launch_options.cycles = value;
                     }
@@ -149,49 +154,33 @@ impl Application for Gui {
                         data_state.launch_options.instructions = value;
                     }
 
+                    // Test Options
+
+                    Message::JsonToggled(value) => {
+                        data_state.launch_options.json = value;
+                    }
+
+                    Message::ListToggled(value) => {
+                        data_state.launch_options.list = value;
+                    }
+
+                    Message::VerboseToggled(value) => {
+                        data_state.launch_options.verbose = value;
+                    }
+
                     Message::InputChanged(value) => {
                         data_state.input_value = value;
                     }
 
                     Message::LaunchCommand => {
-                        use std::process::Command;
-                        use std::str;
                         match data_state.selected_command {
                             PerfEvent::Stat => {
                                 //TODO: Add program here
-
-                                //create another process, in this case run another perf-rust
-                                //with command: test
-                                let mut run_command = String::new();
-                                run_command.push_str("stat");
-                                run_command
-                                    .push_str(data_state.launch_options.get_options().as_str());
-                                run_command.push_str(data_state.input_value.as_str());
-
-                                println!("splitted: {:?}", run_command);
-
-                                let output = Command::new("./ruperf")
-                                    .args(run_command.split(' '))
-                                    .output()
-                                    .expect("failed to execute process");
-
-                                // Create buffer variable
-                                let buf = &output.stdout;
-
-                                // Convert &vec[u8] into string
-                                let s = match str::from_utf8(buf) {
-                                    Ok(v) => v,
-                                    Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-                                };
-
-                                //output to data pane
-                                data_state.data = s.to_string();
-
-                                println!("output: {}", s);
+                                run_program(PerfEvent::Stat, data_state)
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
-                                data_state.data = format!("Record output:");
+                                run_program(PerfEvent::Record, data_state)
                             }
                             PerfEvent::Report => {
                                 //TODO: Add program here
@@ -211,7 +200,7 @@ impl Application for Gui {
                             }
                             PerfEvent::Test => {
                                 //TODO: Add program here
-                                data_state.data = format!("Test output:");
+                                run_program(PerfEvent::Test, data_state)
 
                             }
                         }
@@ -256,7 +245,7 @@ impl Application for Gui {
                         .align_items(Align::Start)
                         .spacing(10)
                         .push(Text::new("Select a program to run")
-                            .color(style::widget::TextColor))
+                            .color(style::widget::TEXT_COLOR))
                         .push(list);
 
                     // Initialize Input field
@@ -304,7 +293,7 @@ impl Application for Gui {
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
                                     .push(Text::new(&content.data)
-                                    .color(style::widget::TextColor)),
+                                    .color(style::widget::TEXT_COLOR)),
                             ),
 
                             Context::NewEvent => Container::new(
@@ -319,10 +308,47 @@ impl Application for Gui {
                                         // Text::new("Program to run:").into(),
                                         input.into(),
                                         Rule::horizontal(100).into(),
-                                        // Text::new("Options:").into(),
-                                        Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled).into(), //TODO: figure out why not showing
-                                        Space::new(Length::Fill, Length::from(10)).into(),
-                                        Checkbox::new(content.launch_options.instructions, "Instructions", Message::InstructionsToggled).into(), //TODO: figure out why not showing
+                                        Text::new("Options:")
+                                        .color(style::widget::TEXT_COLOR)
+                                        .into(),
+                                        {
+                                            //these are the options for each individual event selected:
+                                            match content.selected_command {
+                                                PerfEvent::Stat => {
+                                                    Container::new(
+                                                        Column::with_children(
+                                                            vec![
+                                                    Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled).into(),
+                                                    Space::new(Length::Fill, Length::from(10)).into(),
+                                                    Checkbox::new(content.launch_options.instructions, "Instructions", Message::InstructionsToggled).into(),
+                                                            ]
+                                                        )
+                                                    ).into()
+                                                }
+                                                PerfEvent::Test => {
+                                                    Container::new(
+                                                        Column::with_children(
+                                                            vec![
+                                                    Checkbox::new(content.launch_options.json, "Json", Message::JsonToggled).into(),
+                                                    Space::new(Length::Fill, Length::from(10)).into(),
+                                                    Checkbox::new(content.launch_options.list, "List", Message::ListToggled).into(),
+                                                    Space::new(Length::Fill, Length::from(10)).into(),
+                                                    Checkbox::new(content.launch_options.verbose, "Verbose", Message::VerboseToggled).into(),
+                                                            ]
+                                                        )
+                                                    ).into()
+                                                }
+
+                                                _ => {
+                                                    Container::new(
+                                                        Column::with_children(
+                                                            vec![
+                                                            ]
+                                                        )
+                                                    ).into()
+                                                }
+                                            }
+                                        },
                                         Rule::horizontal(100).into(),
                                         // Space::new(Length::Fill, Length::from(100)).into(),
                                         Button::new(
@@ -380,4 +406,61 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .height(Length::Fill)
         .center_y()
         .into()
+}
+
+fn run_program(event: PerfEvent, mut data_state: &mut Content){
+    use std::process::Command;
+    use std::str;
+
+    //create another process, in this case run another perf-rust
+    //with command: test
+    let mut run_command = String::new();
+
+    match event{
+        PerfEvent::Stat => {
+            run_command.push_str("stat");
+        }
+        PerfEvent::Record => {
+            run_command.push_str("record");
+        }
+        PerfEvent::Report => {
+            run_command.push_str("report");
+        }
+        PerfEvent::Annotate => {
+            run_command.push_str("annotate");
+        }
+        PerfEvent::Bench => {
+            run_command.push_str("bench");
+        }
+        PerfEvent::Top => {
+            run_command.push_str("top");
+        }
+        PerfEvent::Test => {
+            run_command.push_str("test");
+        }
+    }
+
+    run_command.push_str(data_state.launch_options.get_options().as_str());
+    run_command.push_str(data_state.input_value.as_str());
+
+    println!("splitted: {:?}", run_command);
+
+    let output = Command::new("./ruperf")
+        .args(run_command.split(' '))
+        .output()
+        .expect("failed to execute process");
+
+    // Create buffer variable
+    let buf = &output.stdout;
+
+    // Convert &vec[u8] into string
+    let s = match str::from_utf8(buf) {
+        Ok(v) => v,
+        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+    };
+
+    //output to data pane
+    data_state.data = s.to_string();
+
+    println!("output: {}", s);
 }

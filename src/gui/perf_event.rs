@@ -48,23 +48,3 @@ impl std::fmt::Display for PerfEvent {
         )
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EventOption {
-    Cycles,
-    Instructions,
-}
-
-/// Provide EventOptions as String data types
-impl std::fmt::Display for EventOption {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                EventOption::Cycles => "Cyles",
-                EventOption::Instructions => "Instructions",
-            }
-        )
-    }
-}

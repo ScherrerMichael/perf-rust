@@ -67,6 +67,9 @@ pub struct Task {
 pub struct Options {
     pub cycles: bool,
     pub instructions: bool,
+    pub json: bool,
+    pub list: bool,
+    pub verbose: bool,
 }
 
 impl Default for Options {
@@ -74,6 +77,9 @@ impl Default for Options {
         Options {
             cycles: false,
             instructions: false,
+            json: false,
+            list: false,
+            verbose: false,
         }
     }
 }
