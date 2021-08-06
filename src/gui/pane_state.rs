@@ -41,6 +41,41 @@ impl Content {
             launch_options: Options::default(),
         }
     }
+
+    pub fn get_options(&self) -> String {
+        let mut res = String::new();
+
+        match self.selected_command {
+            PerfEvent::Stat => {
+                if self.launch_options.cycles == true {
+                    res.push_str(" --event cycles");
+                }
+                if self.launch_options.instructions == true {
+                    res.push_str(" --event instructions");
+                }
+            }
+
+            PerfEvent::Test => {
+                if self.launch_options.json == true {
+                    res.push_str(" --json");
+                }
+                else if self.launch_options.list == true {
+                    res.push_str(" --list");
+                }
+                else if self.launch_options.verbose == true {
+                    res.push_str(" --verbose");
+                }
+            }
+
+            _ => {
+                //nothing for now
+            }
+        }
+        
+        // res.push(' ');
+
+        res
+    }
 }
 
 /// Main pane Contexts
@@ -84,18 +119,3 @@ impl Default for Options {
     }
 }
 
-impl Options {
-    pub fn get_options(&self) -> String {
-        let mut res = String::new();
-
-        if self.cycles == true {
-            res.push_str(" --event cycles");
-        }
-        if self.instructions == true {
-            res.push_str(" --event instructions");
-        }
-        res.push(' ');
-
-        res
-    }
-}

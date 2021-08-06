@@ -305,9 +305,31 @@ impl Application for Gui {
                                     .push(scrollable_list.push(Column::with_children(vec![
                                         Rule::horizontal(100).into(),
                                         // Space::new(Length::Fill, Length::from(100)).into(),
-                                        // Text::new("Program to run:").into(),
-                                        input.into(),
-                                        Rule::horizontal(100).into(),
+                                        {
+                                            match content.selected_command
+                                            {
+                                                PerfEvent::Stat => {
+                                                    Column::with_children(
+                                                        vec![
+                                                            Text::new("Program to run:")
+                                                            .color(style::widget::TEXT_COLOR)
+                                                            .into(),
+                                                            input.into(),
+                                                            Rule::horizontal(100).into(),
+                                                        ]
+                                                    ).into()
+                                                }
+
+                                                _=> {
+                                                    Container::new(
+                                                        Column::with_children(
+                                                            vec![
+                                                            ]
+                                                        )
+                                                    ).into()
+                                                }
+                                            }
+                                        },
                                         Text::new("Options:")
                                         .color(style::widget::TEXT_COLOR)
                                         .into(),
@@ -318,7 +340,8 @@ impl Application for Gui {
                                                     Container::new(
                                                         Column::with_children(
                                                             vec![
-                                                    Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled).into(),
+                                                    Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled)
+                                                    .into(),
                                                     Space::new(Length::Fill, Length::from(10)).into(),
                                                     Checkbox::new(content.launch_options.instructions, "Instructions", Message::InstructionsToggled).into(),
                                                             ]
@@ -358,7 +381,8 @@ impl Application for Gui {
                                         .on_press(Message::LaunchCommand)
                                         .style(style::widget::Button{})
                                         .into(),
-                                    ]))),
+                                    ])
+                                .padding(20))),
                             ),
                         },
                         // Log pane
@@ -419,6 +443,9 @@ fn run_program(event: PerfEvent, mut data_state: &mut Content){
     match event{
         PerfEvent::Stat => {
             run_command.push_str("stat");
+            run_command.push_str(data_state.get_options().as_str());
+            run_command.push_str(" ");
+            run_command.push_str(data_state.input_value.as_str());
         }
         PerfEvent::Record => {
             run_command.push_str("record");
@@ -437,11 +464,10 @@ fn run_program(event: PerfEvent, mut data_state: &mut Content){
         }
         PerfEvent::Test => {
             run_command.push_str("test");
+            run_command.push_str(data_state.get_options().as_str());
         }
     }
 
-    run_command.push_str(data_state.launch_options.get_options().as_str());
-    run_command.push_str(data_state.input_value.as_str());
 
     println!("splitted: {:?}", run_command);
 
