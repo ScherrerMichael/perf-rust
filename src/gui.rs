@@ -145,7 +145,6 @@ impl Application for Gui {
                     }
 
                     // Stat Options
-
                     Message::CyclesToggled(value) => {
                         data_state.launch_options.cycles = value;
                     }
@@ -155,7 +154,6 @@ impl Application for Gui {
                     }
 
                     // Test Options
-
                     Message::JsonToggled(value) => {
                         data_state.launch_options.json = value;
                     }
@@ -201,7 +199,6 @@ impl Application for Gui {
                             PerfEvent::Test => {
                                 //TODO: Add program here
                                 run_program(PerfEvent::Test, data_state)
-
                             }
                         }
 
@@ -241,12 +238,10 @@ impl Application for Gui {
 
                     // Initialize scrollable list of elements
                     let scrollable_list = Scrollable::new(&mut content.scroll)
+                        .height(Length::Fill)
                         .width(Length::Fill)
                         .align_items(Align::Start)
-                        .spacing(10)
-                        .push(Text::new("Select a program to run")
-                            .color(style::widget::TEXT_COLOR))
-                        .push(list);
+                        .spacing(10);
 
                     // Initialize Input field
                     let input = TextInput::new(
@@ -286,15 +281,11 @@ impl Application for Gui {
                         // Main: view data of running event (default)
                         // NewEvent: generate menu for creating events
                         PaneType::Main => match content.context {
-                            Context::Main => Container::new(
-                                Column::new()
-                                    .spacing(5)
-                                    .padding(5)
-                                    .width(Length::Fill)
-                                    .align_items(Align::Center)
-                                    .push(Text::new(&content.data)
-                                    .color(style::widget::TEXT_COLOR)),
-                            ),
+                            Context::Main => {
+                                Container::new(scrollable_list.push(
+                                    Text::new(&content.data).color(style::widget::TEXT_COLOR),
+                                ))
+                            }
 
                             Context::NewEvent => Container::new(
                                 Column::new()
@@ -302,89 +293,122 @@ impl Application for Gui {
                                     .padding(5)
                                     .width(Length::Fill)
                                     .align_items(Align::Center)
-                                    .push(scrollable_list.push(Column::with_children(vec![
-                                        Rule::horizontal(100).into(),
-                                        // Space::new(Length::Fill, Length::from(100)).into(),
-                                        {
-                                            match content.selected_command
-                                            {
-                                                PerfEvent::Stat => {
-                                                    Column::with_children(
-                                                        vec![
-                                                            Text::new("Program to run:")
-                                                            .color(style::widget::TEXT_COLOR)
-                                                            .into(),
-                                                            input.into(),
-                                                            Rule::horizontal(100).into(),
-                                                        ]
-                                                    ).into()
-                                                }
-
-                                                _=> {
-                                                    Container::new(
-                                                        Column::with_children(
-                                                            vec![
-                                                            ]
-                                                        )
-                                                    ).into()
-                                                }
-                                            }
-                                        },
-                                        Text::new("Options:")
-                                        .color(style::widget::TEXT_COLOR)
-                                        .into(),
-                                        {
-                                            //these are the options for each individual event selected:
-                                            match content.selected_command {
-                                                PerfEvent::Stat => {
-                                                    Container::new(
-                                                        Column::with_children(
-                                                            vec![
-                                                    Checkbox::new(content.launch_options.cycles, "Cycles", Message::CyclesToggled)
+                                    .push(
+                                        scrollable_list.push(
+                                            Column::with_children(vec![
+                                                Text::new("Select a program to run")
+                                                    .color(style::widget::TEXT_COLOR)
                                                     .into(),
-                                                    Space::new(Length::Fill, Length::from(10)).into(),
-                                                    Checkbox::new(content.launch_options.instructions, "Instructions", Message::InstructionsToggled).into(),
-                                                            ]
-                                                        )
-                                                    ).into()
-                                                }
-                                                PerfEvent::Test => {
-                                                    Container::new(
-                                                        Column::with_children(
-                                                            vec![
-                                                    Checkbox::new(content.launch_options.json, "Json", Message::JsonToggled).into(),
-                                                    Space::new(Length::Fill, Length::from(10)).into(),
-                                                    Checkbox::new(content.launch_options.list, "List", Message::ListToggled).into(),
-                                                    Space::new(Length::Fill, Length::from(10)).into(),
-                                                    Checkbox::new(content.launch_options.verbose, "Verbose", Message::VerboseToggled).into(),
-                                                            ]
-                                                        )
-                                                    ).into()
-                                                }
+                                                list.into(),
+                                                Rule::horizontal(100).into(),
+                                                // Space::new(Length::Fill, Length::from(100)).into(),
+                                                {
+                                                    match content.selected_command {
+                                                        PerfEvent::Stat => {
+                                                            Column::with_children(vec![
+                                                                Text::new("Program to run:")
+                                                                    .color(
+                                                                        style::widget::TEXT_COLOR,
+                                                                    )
+                                                                    .into(),
+                                                                input.into(),
+                                                                Rule::horizontal(100).into(),
+                                                            ])
+                                                            .into()
+                                                        }
 
-                                                _ => {
-                                                    Container::new(
-                                                        Column::with_children(
-                                                            vec![
-                                                            ]
+                                                        _ => Container::new(Column::with_children(
+                                                            vec![],
+                                                        ))
+                                                        .into(),
+                                                    }
+                                                },
+                                                Text::new("Options:")
+                                                    .color(style::widget::TEXT_COLOR)
+                                                    .into(),
+                                                {
+                                                    //these are the options for each individual event selected:
+                                                    match content.selected_command {
+                                                        PerfEvent::Stat => Container::new(
+                                                            Column::with_children(vec![
+                                                                Checkbox::new(
+                                                                    content.launch_options.cycles,
+                                                                    "Cycles",
+                                                                    Message::CyclesToggled,
+                                                                )
+                                                                .into(),
+                                                                Space::new(
+                                                                    Length::Fill,
+                                                                    Length::from(10),
+                                                                )
+                                                                .into(),
+                                                                Checkbox::new(
+                                                                    content
+                                                                        .launch_options
+                                                                        .instructions,
+                                                                    "Instructions",
+                                                                    Message::InstructionsToggled,
+                                                                )
+                                                                .into(),
+                                                            ]),
                                                         )
-                                                    ).into()
-                                                }
-                                            }
-                                        },
-                                        Rule::horizontal(100).into(),
-                                        // Space::new(Length::Fill, Length::from(100)).into(),
-                                        Button::new(
-                                            &mut content.launch_button,
-                                            Text::new("Launch"),
-                                        )
-                                        .on_press(Message::LaunchCommand)
-                                        .style(style::widget::Button{})
-                                        .into(),
-                                    ])
-                                .padding(20))),
+                                                        .into(),
+                                                        PerfEvent::Test => Container::new(
+                                                            Column::with_children(vec![
+                                                                Checkbox::new(
+                                                                    content.launch_options.json,
+                                                                    "Json",
+                                                                    Message::JsonToggled,
+                                                                )
+                                                                .into(),
+                                                                Space::new(
+                                                                    Length::Fill,
+                                                                    Length::from(10),
+                                                                )
+                                                                .into(),
+                                                                Checkbox::new(
+                                                                    content.launch_options.list,
+                                                                    "List",
+                                                                    Message::ListToggled,
+                                                                )
+                                                                .into(),
+                                                                Space::new(
+                                                                    Length::Fill,
+                                                                    Length::from(10),
+                                                                )
+                                                                .into(),
+                                                                Checkbox::new(
+                                                                    content.launch_options.verbose,
+                                                                    "Verbose",
+                                                                    Message::VerboseToggled,
+                                                                )
+                                                                .into(),
+                                                            ]),
+                                                        )
+                                                        .into(),
+
+                                                        _ => Container::new(Column::with_children(
+                                                            vec![],
+                                                        ))
+                                                        .into(),
+                                                    }
+                                                },
+                                                Rule::horizontal(100).into(),
+                                                // Space::new(Length::Fill, Length::from(100)).into(),
+                                                Button::new(
+                                                    &mut content.launch_button,
+                                                    Text::new("Launch"),
+                                                )
+                                                .on_press(Message::LaunchCommand)
+                                                .style(style::widget::Button {})
+                                                .into(),
+                                            ])
+                                            .padding(20),
+                                        ),
+                                    ),
                             ),
                         },
+
                         // Log pane
                         PaneType::Log => Container::new(
                             Column::new()
@@ -432,7 +456,7 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .into()
 }
 
-fn run_program(event: PerfEvent, mut data_state: &mut Content){
+fn run_program(event: PerfEvent, mut data_state: &mut Content) {
     use std::process::Command;
     use std::str;
 
@@ -440,7 +464,7 @@ fn run_program(event: PerfEvent, mut data_state: &mut Content){
     //with command: test
     let mut run_command = String::new();
 
-    match event{
+    match event {
         PerfEvent::Stat => {
             run_command.push_str("stat");
             run_command.push_str(data_state.get_options().as_str());
@@ -467,7 +491,6 @@ fn run_program(event: PerfEvent, mut data_state: &mut Content){
             run_command.push_str(data_state.get_options().as_str());
         }
     }
-
 
     println!("splitted: {:?}", run_command);
 

@@ -1,6 +1,6 @@
 /// Widget Style
 pub mod widget {
-    use iced::{button, container, checkbox, Background, Color, Vector};
+    use iced::{button, checkbox, container, Background, Color, Vector};
 
     pub const SURFACE: Color = Color::from_rgb(
         0x54 as f32 / 255.0,
@@ -59,7 +59,5 @@ pub mod widget {
         }
     }
 
-
-    pub const TEXT_COLOR:Color = Color::WHITE;
-
+    pub const TEXT_COLOR: Color = Color::WHITE;
 }

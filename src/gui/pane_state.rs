@@ -58,11 +58,9 @@ impl Content {
             PerfEvent::Test => {
                 if self.launch_options.json == true {
                     res.push_str(" --json");
-                }
-                else if self.launch_options.list == true {
+                } else if self.launch_options.list == true {
                     res.push_str(" --list");
-                }
-                else if self.launch_options.verbose == true {
+                } else if self.launch_options.verbose == true {
                     res.push_str(" --verbose");
                 }
             }
@@ -71,7 +69,7 @@ impl Content {
                 //nothing for now
             }
         }
-        
+
         // res.push(' ');
 
         res
@@ -118,4 +116,3 @@ impl Default for Options {
         }
     }
 }
-
