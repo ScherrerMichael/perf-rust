@@ -1,12 +1,12 @@
 pub mod panes {
 
     use iced::{
-        executor, pane_grid,
+        pane_grid,
         widget::{
             Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
             TextInput,
         },
-        Align, Application, Clipboard, Command, Element, Length, Settings,
+        Align, Length,
     };
 
     use crate::gui::events::perf::PerfEvent;

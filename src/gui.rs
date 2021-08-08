@@ -2,8 +2,7 @@
 use iced::{
     executor, pane_grid,
     widget::{
-        Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
-        TextInput,
+        Column, Container, Text,
     },
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
@@ -14,12 +13,13 @@ mod state;
 mod style;
 mod widgets;
 
+use state::{
+    main::State,
+    save_load::SavedState, 
+    pane::{Content, Context}
+};
 use events::perf::PerfEvent;
 use messages::main::Message;
-use state::main::State;
-use state::pane::Content;
-use state::pane::Context;
-use state::save_load::SavedState;
 use widgets::panes;
 
 /// Run the Gui Launcher
@@ -207,7 +207,7 @@ impl Application for Gui {
             Gui::Loading => loading_message(),
             Gui::Loaded(State { panes_state, .. }) => {
                 //panes in the main application
-                let panes = crate::gui::widgets::panes::new(panes_state);
+                let panes = panes::new(panes_state);
 
                 // Collect all panes and add them to main Gui element
                 let content = Column::new()

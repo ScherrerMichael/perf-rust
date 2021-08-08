@@ -1,17 +1,17 @@
 pub mod main {
     use super::pane::*;
-    use iced::pane_grid;
+    use iced::pane_grid::{Pane, Split, self};
 
     /// State for Gui
     pub struct State {
         pub tasks: Vec<Task>,
         pub panes_state: pane_grid::State<Content>,
         pub panes_created: usize,
-        pub data_pane: pane_grid::Pane,
-        pub log_pane: pane_grid::Pane,
-        pub task_pane: pane_grid::Pane,
-        pub vert_split: pane_grid::Split,
-        pub horz_split: pane_grid::Split,
+        pub data_pane: Pane,
+        pub log_pane: Pane,
+        pub task_pane: Pane,
+        pub vert_split: Split,
+        pub horz_split: Split,
     }
 
     /// Default state for Gui
@@ -132,8 +132,6 @@ pub mod pane {
                     //nothing for now
                 }
             }
-
-            // res.push(' ');
 
             res
         }
