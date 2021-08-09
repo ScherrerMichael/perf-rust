@@ -62,6 +62,7 @@ impl Application for Gui {
             Gui::Loading => {
             match message {
                 Message::Loaded(Ok(state)) => {
+                    //tasks are loaded here
                     *self = Gui::Loaded(State {
                         tasks: state.tasks,
                         ..State::default()
@@ -82,6 +83,8 @@ impl Application for Gui {
             // When Gui is loaded prepare to recieve message
             // callbacks from children widgets
             Gui::Loaded(state) => {
+
+
                 let mut saved = false;
 
                 let mut data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
