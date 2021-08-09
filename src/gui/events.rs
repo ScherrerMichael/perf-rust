@@ -1,6 +1,7 @@
 pub mod perf {
+    use serde::{Deserialize, Serialize};
     /// Perf Commands to be used
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
     pub enum PerfEvent {
         Stat,
         Record,
@@ -22,6 +23,19 @@ pub mod perf {
             PerfEvent::Test,
             PerfEvent::Top,
         ];
+
+        pub fn as_str(&self) -> &'static str
+        {
+            match self {
+                PerfEvent::Stat => "stat",
+                PerfEvent::Test => "test",
+                PerfEvent::Report => "report",
+                PerfEvent::Record => "record",
+                PerfEvent::Annotate => "annotate",
+                PerfEvent::Bench => "bench",
+                PerfEvent::Top => "top",
+            }
+        }
     }
 
     /// Default PerfEvent
@@ -49,4 +63,6 @@ pub mod perf {
             )
         }
     }
+
+    
 }

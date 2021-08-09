@@ -12,6 +12,8 @@ pub mod main {
         pub task_pane: Pane,
         pub vert_split: Split,
         pub horz_split: Split,
+        pub dirty: bool,
+        pub saving: bool,
     }
 
     /// Default state for Gui
@@ -55,6 +57,8 @@ pub mod main {
                 log_pane,
                 vert_split,
                 horz_split,
+                dirty: false,
+                saving: false,
             }
         }
     }
@@ -153,9 +157,58 @@ pub mod pane {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     // Currently running or previously ran events
     pub struct Task {
-        name: String,
-        application: String,
-        options: Vec<String>,
+        event: perf::PerfEvent,
+        program: String,
+        options: String,
+        pub command: String,
+    }
+
+    impl Task{
+        pub fn new(event: Option<perf::PerfEvent>, options: Option<String>, program: Option<String>)
+         -> Result<Task, &'static str> {
+            let mut command = String::new();
+            let mut task_event = perf::PerfEvent::default();
+            let mut task_options = String::new();
+            let mut task_program = String::new();
+            match event {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    task_event = res;
+                }
+                None => {
+                    return Err("No event.")
+                }
+            }
+            match options {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    if task_event == perf::PerfEvent::Stat{
+                    command.push_str(" ");
+                    }
+                    task_options = res;
+                }
+                None => {
+                    return Err("No options.")
+                }
+            }
+            match program {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    task_program = res.to_string();
+                }
+                None => {}
+            }
+
+            Ok(
+                Task{
+                    event: task_event,
+                    options: task_options.to_string(),
+                    program: task_program.to_string(),
+                    command: command,
+                }
+            )
+        }
+
     }
 
     pub struct Options {
@@ -246,6 +299,9 @@ pub mod save_load {
             let json = serde_json::to_string_pretty(&self).map_err(|_| SaveError::FormatError)?;
 
             let path = Self::path();
+
+            //here for debug purposes
+            println!("saving to {:?}", path);
 
             if let Some(dir) = path.parent() {
                 async_std::fs::create_dir_all(dir)

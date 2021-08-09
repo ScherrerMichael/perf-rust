@@ -16,7 +16,7 @@ mod widgets;
 use state::{
     main::State,
     save_load::SavedState, 
-    pane::{Content, Context}
+    pane::{Content, Context, Task}
 };
 use events::perf::PerfEvent;
 use messages::main::Message;
@@ -54,17 +54,18 @@ impl Application for Gui {
         &mut self,
         message: Self::Message,
         _clipboard: &mut Clipboard,
-    ) -> Command<Self::Message> {
+    ) -> Command<Message> {
         match self {
             // Update Loading consumed for Gui
             // then changed to loaded based on
             // Loading function
-            Gui::Loading => match message {
+            Gui::Loading => {
+            match message {
                 Message::Loaded(Ok(state)) => {
                     *self = Gui::Loaded(State {
                         tasks: state.tasks,
                         ..State::default()
-                    })
+                    });
                 }
                 // When load file is not found
                 // set state to default
@@ -72,10 +73,11 @@ impl Application for Gui {
                     *self = Gui::Loaded(State::default());
                 }
 
-                _ => {
-                    println!("error")
-                }
-            },
+                _ => {}
+            }
+
+            Command::none()
+        }
 
             // When Gui is loaded prepare to recieve message
             // callbacks from children widgets
@@ -159,12 +161,27 @@ impl Application for Gui {
                     Message::LaunchCommand => {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
-                                //TODO: Add program here
-                                run_program(PerfEvent::Stat, data_state)
+
+                                let task = Task::new(
+                                    Some(PerfEvent::Stat),
+                                    Some(data_state.get_options().to_string()),
+                                    Some(data_state.input_value.to_string()),
+                                );
+
+                                match task {
+                                    Ok(t) => {
+                                        run_program(t, data_state)
+                                        .expect("error");
+                                    }
+                                    Err(s) => {
+                                        println!("Error: {}", s);
+                                    }
+                                }
+
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
-                                run_program(PerfEvent::Record, data_state)
+                                data_state.data = format!("Record output:");
                             }
                             PerfEvent::Report => {
                                 //TODO: Add program here
@@ -183,8 +200,21 @@ impl Application for Gui {
                                 data_state.data = format!("Bench output:");
                             }
                             PerfEvent::Test => {
-                                //TODO: Add program here
-                                run_program(PerfEvent::Test, data_state)
+                                let task = Task::new(
+                                    Some(PerfEvent::Test),
+                                    Some(data_state.get_options().to_string()),
+                                    None
+                                );
+
+                                match task {
+                                    Ok(t) => {
+                                        run_program(t, data_state)
+                                        .expect("error");
+                                    }
+                                    Err(s) => {
+                                        println!("Error: {}", s);
+                                    }
+                                }
                             }
                         }
 
@@ -193,13 +223,34 @@ impl Application for Gui {
                         data_state.context = Context::Main;
                     }
 
-                    _ => {
-                        println!("other")
+                    Message::Saved(_) => {
+                        state.saving = false;
+                        saved = true;
                     }
+
+                    _ => {}
+                }
+
+                if !saved {
+                    state.dirty = true;
+                }
+
+                if state.dirty && !state.saving{
+                    state.dirty = false;
+                    state.saving = true;
+
+                    Command::perform(
+                        SavedState {
+                            tasks: state.tasks.clone(),
+                        }
+                        .save(),
+                        Message::Saved,
+                    )
+                } else {
+                    Command::none()
                 }
             }
         }
-        Command::none()
     }
     /// Display Graphics to screen
     fn view(&mut self) -> Element<Self::Message> {
@@ -238,46 +289,33 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .into()
 }
 
-fn run_program(event: PerfEvent, mut data_state: &mut Content) {
+#[derive(Debug, Clone)]
+/// Error type for save function
+pub enum ProgramError {
+    PerfEvent,
+    Program(String)
+}
+
+fn run_program(task: Task, data_state: &mut Content) -> Result<(), ProgramError>{
     use std::process::Command;
     use std::str;
 
     //create another process, in this case run another perf-rust
     //with command: test
-    let mut run_command = String::new();
+    let run_command = &task.command;
 
-    match event {
-        PerfEvent::Stat => {
-            run_command.push_str("stat");
-            run_command.push_str(data_state.get_options().as_str());
-            run_command.push_str(" ");
-            run_command.push_str(data_state.input_value.as_str());
-        }
-        PerfEvent::Record => {
-            run_command.push_str("record");
-        }
-        PerfEvent::Report => {
-            run_command.push_str("report");
-        }
-        PerfEvent::Annotate => {
-            run_command.push_str("annotate");
-        }
-        PerfEvent::Bench => {
-            run_command.push_str("bench");
-        }
-        PerfEvent::Top => {
-            run_command.push_str("top");
-        }
-        PerfEvent::Test => {
-            run_command.push_str("test");
-            run_command.push_str(data_state.get_options().as_str());
-        }
-    }
+            // run_command.push_str("stat");
+            // run_command.push_str(data_state.get_options().as_str());
+            // run_command.push_str(" ");
+            // run_command.push_str(data_state.input_value.as_str());
+
+            // run_command.push_str("test");
+            // run_command.push_str(data_state.get_options().as_str());
 
     println!("splitted: {:?}", run_command);
 
     let output = Command::new("./ruperf")
-        .args(run_command.split(' '))
+        .args(task.command.split(" "))
         .output()
         .expect("failed to execute process");
 
@@ -290,8 +328,13 @@ fn run_program(event: PerfEvent, mut data_state: &mut Content) {
         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
     };
 
+    // save task data
+    // saveState.tasks.push(task);
+
     //output to data pane
     data_state.data = s.to_string();
 
     println!("output: {}", s);
+
+    Ok(())
 }
