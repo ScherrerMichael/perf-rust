@@ -170,8 +170,9 @@ impl Application for Gui {
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(t, data_state)
+                                        run_program(&t, data_state)
                                         .expect("error");
+                                        state.tasks.push(t);
                                     }
                                     Err(s) => {
                                         println!("Error: {}", s);
@@ -208,8 +209,9 @@ impl Application for Gui {
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(t, data_state)
+                                        run_program(&t, data_state)
                                         .expect("error");
+                                        state.tasks.push(t);
                                     }
                                     Err(s) => {
                                         println!("Error: {}", s);
@@ -296,7 +298,7 @@ pub enum ProgramError {
     Program(String)
 }
 
-fn run_program(task: Task, data_state: &mut Content) -> Result<(), ProgramError>{
+fn run_program(task: &Task, data_state: &mut Content) -> Result<(), ProgramError>{
     use std::process::Command;
     use std::str;
 
