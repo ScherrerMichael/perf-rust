@@ -1,7 +1,7 @@
 pub mod panes {
 
     use iced::{
-        pane_grid,
+        pane_grid, Element,
         widget::{
             Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
             TextInput,
@@ -15,22 +15,40 @@ pub mod panes {
     use crate::gui::state::pane::Context;
     use crate::gui::state::pane::PaneType;
     use crate::gui::style;
+    use super::task::Task;
 
     // pub fn panes(panes_state: Content)
-    pub fn new<'a>(panes_state: &mut pane_grid::State<pane::Content>) -> PaneGrid<Message> {
+    pub fn new<'a>(panes_state: &'a mut pane_grid::State<pane::Content>) -> PaneGrid<'a, Message> {
         let panes = PaneGrid::new(panes_state, |pane, content| {
             let title = Text::new("");
 
             // Title of pane
             let title_bar = pane_grid::TitleBar::new(title).padding(10);
 
-            // Initialize list of elements
-            let list = PickList::new(
-                &mut content.pick_list,
+            // Initialize event list of elements
+            let event_list = PickList::new(
+                &mut content.event_list,
                 &PerfEvent::ALL[..],
                 Some(content.selected_command),
                 Message::CommandSelected,
             );
+
+            // fn loading_message<'a>() -> Element<'a, Message> {
+             let task_list: Element<_> = if content.tasks.iter().count() > 0 {
+                 println!("inside tasks ceation!");
+                        content.tasks
+                        .iter_mut()
+                        .enumerate()
+                        .fold(Column::new().spacing(20), |column, (i, task)| {
+                            column.push(task.view().map(move |message| {
+                                Message::TaskMessage(i, message)
+                            }))
+                        })
+                        .into()
+                } else {
+                    println!("no tasks found :(, number found: {}", content.tasks.iter().count());
+                    Column::new().into()
+                };
 
             // Initialize scrollable list of elements
             let scrollable_list = Scrollable::new(&mut content.scroll)
@@ -62,13 +80,15 @@ pub mod panes {
                         .padding(5)
                         .width(Length::Fill)
                         .align_items(Align::Start)
-                        .push(
+                        .push( scrollable_list.push(Column::with_children(vec![
+                            
                             Button::new(&mut content.create_button, Text::new("new"))
                                 .style(style::widget::Button {})
                                 .on_press(Message::NewAppPressed)
-                                .width(Length::FillPortion(100)),
-                        ),
-                )
+                                .width(Length::FillPortion(100)).into(),
+                                task_list,
+                        ]))
+                ))
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .padding(5),
@@ -94,7 +114,7 @@ pub mod panes {
                                         Text::new("Select a program to run")
                                             .color(style::widget::TEXT_COLOR)
                                             .into(),
-                                        list.into(),
+                                        event_list.into(),
                                         Rule::horizontal(100).into(),
                                         // Space::new(Length::Fill, Length::from(100)).into(),
                                         {
@@ -200,5 +220,120 @@ pub mod panes {
         });
 
         panes
+    }
+}
+
+pub mod task {
+    use serde::{Deserialize, Serialize};
+    use crate::gui::state::task::TaskState;
+    use crate::gui::messages::task::TaskMessage;
+    use crate::gui::events::perf;
+    use iced::{Element, widget::{button, Text}};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    // Currently running or previously ran events
+    pub struct Task {
+        event: perf::PerfEvent,
+        program: String,
+        options: String,
+        pub command: String,
+        
+        #[serde(skip)]
+        state: TaskState,
+    }
+
+    impl Task{
+        pub fn new(event: Option<perf::PerfEvent>, options: Option<String>, program: Option<String>)
+         -> Result<Task, &'static str> {
+            let mut command = String::new();
+            let mut task_event = perf::PerfEvent::default();
+            let mut task_options = String::new();
+            let mut task_program = String::new();
+            match event {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    task_event = res;
+                }
+                None => {
+                    return Err("No event.")
+                }
+            }
+            match options {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    if task_event == perf::PerfEvent::Stat{
+                    command.push_str(" ");
+                    }
+                    task_options = res;
+                }
+                None => {
+                    return Err("No options.")
+                }
+            }
+            match program {
+                Some(res) => {
+                    command.push_str(res.as_str());
+                    task_program = res.to_string();
+                }
+                None => {}
+            }
+
+            Ok(
+                Task{
+                    event: task_event,
+                    options: task_options.to_string(),
+                    program: task_program.to_string(),
+                    command: command,
+
+                    state: TaskState::Idle {
+                        edit_button: button::State::new(),
+                    }
+                }
+            )
+        }
+
+        fn update(&mut self, message: TaskMessage) {
+            match message {
+                TaskMessage::Edit => {
+                    println!("editing task")
+                }
+                TaskMessage::Delete => {
+                    println!("deleting task")
+                }
+                TaskMessage::Run => {
+                    println!("running task")
+                }
+
+            }
+        }
+
+        pub fn view(&mut self) -> Element<TaskMessage> {
+            match &mut self.state{
+                TaskState::Idle {edit_button} => {
+                    Text::new("testing..").into()
+                }
+            }
+        }
+    }
+
+    impl Default for Task{
+        fn default() -> Self {
+            Task{
+                event: perf::PerfEvent::default(),
+                program: String::default(),
+                options: String::default(),
+                command: String::default(),
+                state: TaskState::Idle {
+                    edit_button: button::State::new(),
+                }
+            }
+        }
+    }
+
+    /// Provide Tasks as String data types
+    impl std::fmt::Display for Task {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f,"({}), {}", self.event, self.program)
+        }
     }
 }

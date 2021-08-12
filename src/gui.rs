@@ -16,11 +16,11 @@ mod widgets;
 use state::{
     main::State,
     save_load::SavedState, 
-    pane::{Content, Context, Task}
+    pane::{Content, Context}
 };
 use events::perf::PerfEvent;
 use messages::main::Message;
-use widgets::panes;
+use widgets::{panes, task};
 
 /// Run the Gui Launcher
 pub fn run_gui() -> iced::Result {
@@ -84,10 +84,10 @@ impl Application for Gui {
             // callbacks from children widgets
             Gui::Loaded(state) => {
 
-
                 let mut saved = false;
 
                 let mut data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
+
 
                 match message {
                     Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
@@ -165,7 +165,7 @@ impl Application for Gui {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
 
-                                let task = Task::new(
+                                let task = task::Task::new(
                                     Some(PerfEvent::Stat),
                                     Some(data_state.get_options().to_string()),
                                     Some(data_state.input_value.to_string()),
@@ -204,7 +204,7 @@ impl Application for Gui {
                                 data_state.data = format!("Bench output:");
                             }
                             PerfEvent::Test => {
-                                let task = Task::new(
+                                let task = task::Task::new(
                                     Some(PerfEvent::Test),
                                     Some(data_state.get_options().to_string()),
                                     None
@@ -261,7 +261,12 @@ impl Application for Gui {
     fn view(&mut self) -> Element<Self::Message> {
         match self {
             Gui::Loading => loading_message(),
-            Gui::Loaded(State { panes_state, .. }) => {
+            Gui::Loaded(State { panes_state, tasks, task_pane,..}) => {
+
+                let task_pane = panes_state.get_mut(&task_pane).unwrap();
+
+                task_pane.tasks = tasks.to_vec();
+
                 //panes in the main application
                 let panes = panes::new(panes_state);
 
@@ -301,7 +306,7 @@ pub enum ProgramError {
     Program(String)
 }
 
-fn run_program(task: &Task, data_state: &mut Content) -> Result<(), ProgramError>{
+fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), ProgramError>{
     use std::process::Command;
     use std::str;
 

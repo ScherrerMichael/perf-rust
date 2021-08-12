@@ -1,6 +1,8 @@
 pub mod main {
     use crate::gui::events::perf::PerfEvent;
     use crate::gui::state::*;
+    use crate::gui::widgets::task::Task;
+    use super::task::TaskMessage;
     use iced::pane_grid;
     /// Messages to be sent to the parent widget from
     /// other child widgets, and consumed on update
@@ -12,11 +14,22 @@ pub mod main {
         NewAppPressed,
         Resized(pane_grid::ResizeEvent),
         CommandSelected(PerfEvent),
+        TaskSelected(Task),
         CyclesToggled(bool),
         InstructionsToggled(bool),
         JsonToggled(bool),
         ListToggled(bool),
         VerboseToggled(bool),
         LaunchCommand,
+        TaskMessage(usize, TaskMessage),
+    }
+}
+
+pub mod task {
+    #[derive(Debug, Clone)]
+    pub enum TaskMessage {
+        Edit,
+        Delete,
+        Run,
     }
 }

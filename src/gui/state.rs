@@ -1,6 +1,8 @@
 pub mod main {
     use super::pane::*;
     use iced::pane_grid::{Pane, Split, self};
+    use crate::gui::widgets::task::Task;
+
 
     /// State for Gui
     pub struct State {
@@ -19,9 +21,11 @@ pub mod main {
     /// Default state for Gui
     impl Default for State {
         fn default() -> Self {
+            let tasks = Vec::new();
+
             // First pane and first state is created here:
             // task Pane, panes_state
-            let (mut panes_state, task_pane) = pane_grid::State::new(Content::new(PaneType::Task));
+            let (mut panes_state, task_pane) = pane_grid::State::new(Content::new(PaneType::Task, &tasks));
 
             // Second pane and first split is created here:
             // data_pane, vert_split
@@ -29,7 +33,7 @@ pub mod main {
                 .split(
                     pane_grid::Axis::Vertical,
                     &task_pane,
-                    Content::new(PaneType::Main),
+                    Content::new(PaneType::Main, &tasks),
                 )
                 .unwrap();
 
@@ -39,14 +43,13 @@ pub mod main {
                 .split(
                     pane_grid::Axis::Horizontal,
                     &data_pane,
-                    Content::new(PaneType::Log),
+                    Content::new(PaneType::Log, &tasks),
                 )
                 .unwrap();
 
             panes_state.resize(&vert_split, 0.17);
             panes_state.resize(&horz_split, 0.88);
 
-            let tasks = Vec::new();
 
             State {
                 tasks,
@@ -67,18 +70,21 @@ pub mod main {
 pub mod pane {
 
     use crate::gui::events::*;
+    use crate::gui::widgets::task::Task;
 
     /// States of all panes within the pane grid
     // every pane state must be held here
-    use iced::{button, pick_list, scrollable, text_input};
-    use serde::{Deserialize, Serialize};
-
+    use iced::{button, pick_list, scrollable, text_input, Element};
+#[derive(Debug)]
     pub struct Content {
+        pub tasks: Vec<Task>,
         pub input_value: String,
         pub input: text_input::State,
         pub selected_command: perf::PerfEvent,
+        pub selected_task: Task,
         pub scroll: scrollable::State,
-        pub pick_list: pick_list::State<perf::PerfEvent>,
+        pub event_list: pick_list::State<perf::PerfEvent>,
+        pub task_list: pick_list::State<Task>,
         pub data: String,
         pub log: String,
         pub application: String,
@@ -91,13 +97,16 @@ pub mod pane {
 
     /// Initialize pane states to default values
     impl Content {
-        pub fn new(pane_type: PaneType) -> Self {
+        pub fn new(pane_type: PaneType, tasks: &Vec<Task>) -> Self {
             Content {
+                tasks: tasks.to_vec(),
                 input_value: String::new(),
                 input: text_input::State::new(),
                 selected_command: perf::PerfEvent::default(),
+                selected_task: Task::default(),
                 scroll: scrollable::State::new(),
-                pick_list: pick_list::State::default(),
+                event_list: pick_list::State::default(),
+                task_list: pick_list::State::default(),
                 pane_type,
                 data: String::new(),
                 log: String::new(),
@@ -114,20 +123,20 @@ pub mod pane {
 
             match self.selected_command {
                 perf::PerfEvent::Stat => {
-                    if self.launch_options.cycles == true {
+                    if self.launch_options.cycles{
                         res.push_str(" --event cycles");
                     }
-                    if self.launch_options.instructions == true {
+                    if self.launch_options.instructions{
                         res.push_str(" --event instructions");
                     }
                 }
 
                 perf::PerfEvent::Test => {
-                    if self.launch_options.json == true {
+                    if self.launch_options.json {
                         res.push_str(" --json");
-                    } else if self.launch_options.list == true {
+                    } else if self.launch_options.list {
                         res.push_str(" --list");
-                    } else if self.launch_options.verbose == true {
+                    } else if self.launch_options.verbose {
                         res.push_str(" --verbose");
                     }
                 }
@@ -142,75 +151,21 @@ pub mod pane {
     }
 
     /// Main pane Contexts
+    #[derive(Debug)]
     pub enum Context {
         Main,
         NewEvent,
     }
 
     /// Pane Type
+    #[derive(Debug)]
     pub enum PaneType {
         Task,
         Main,
         Log,
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    // Currently running or previously ran events
-    pub struct Task {
-        event: perf::PerfEvent,
-        program: String,
-        options: String,
-        pub command: String,
-    }
-
-    impl Task{
-        pub fn new(event: Option<perf::PerfEvent>, options: Option<String>, program: Option<String>)
-         -> Result<Task, &'static str> {
-            let mut command = String::new();
-            let mut task_event = perf::PerfEvent::default();
-            let mut task_options = String::new();
-            let mut task_program = String::new();
-            match event {
-                Some(res) => {
-                    command.push_str(res.as_str());
-                    task_event = res;
-                }
-                None => {
-                    return Err("No event.")
-                }
-            }
-            match options {
-                Some(res) => {
-                    command.push_str(res.as_str());
-                    if task_event == perf::PerfEvent::Stat{
-                    command.push_str(" ");
-                    }
-                    task_options = res;
-                }
-                None => {
-                    return Err("No options.")
-                }
-            }
-            match program {
-                Some(res) => {
-                    command.push_str(res.as_str());
-                    task_program = res.to_string();
-                }
-                None => {}
-            }
-
-            Ok(
-                Task{
-                    event: task_event,
-                    options: task_options.to_string(),
-                    program: task_program.to_string(),
-                    command: command,
-                }
-            )
-        }
-
-    }
-
+    #[derive(Debug)]
     pub struct Options {
         pub cycles: bool,
         pub instructions: bool,
@@ -232,9 +187,30 @@ pub mod pane {
     }
 }
 
+pub mod task {
+    use iced::{widget::button};
+
+    #[derive(Debug, Clone)]
+    pub enum TaskState {
+        Idle {
+            edit_button: button::State,
+        }
+    }
+
+    impl Default for TaskState {
+        fn default() -> Self {
+            TaskState::Idle {
+                edit_button: button::State::new(),
+            }
+        }
+    }
+}
+
 pub mod save_load {
-    use super::pane::Task;
+    use crate::gui::widgets::task::Task;
     use serde::{Deserialize, Serialize};
+    use iced::pane_grid;
+    use crate::gui::state::pane::Content;
 
     //customized from iced todo example.
     // source: https://github.com/hecrj/iced/blob/0.3/examples/todos/src/main.rs
