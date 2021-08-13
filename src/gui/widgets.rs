@@ -319,7 +319,7 @@ pub mod task {
                     Column::with_children(vec![
                         Button::new(&mut self.state.edit_button,Text::new(task_title))
                         .style(style::widget::Button {})
-                        .on_press(TaskMessage::Edit)
+                        .on_press(TaskMessage::Run)
                         .width(Length::FillPortion(100))
                         .into()
                     ])

@@ -106,9 +106,9 @@ impl Application for Gui {
                         println!("new app pressed");
                     }
 
-                    Message::TaskMessage(i, TaskMessage::Edit) => {
-                        data_state.context = Context::NewEvent;
-                        println!("task {} pressed", i)
+                    Message::TaskMessage(i, TaskMessage::Run) => {
+                        run_program(&state.tasks[i], data_state)
+                        .expect("error");
                     }
 
                     Message::CommandSelected(PerfEvent::Stat) => {
