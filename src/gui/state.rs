@@ -191,17 +191,15 @@ pub mod task {
     use iced::{widget::button};
 
     #[derive(Debug, Clone)]
-    pub enum TaskState {
-        Idle {
-            edit_button: button::State,
-        }
+    pub struct TaskState {
+        pub edit_button: button::State,
     }
 
     impl Default for TaskState {
         fn default() -> Self {
-            TaskState::Idle {
-                edit_button: button::State::new(),
-            }
+                TaskState{
+                    edit_button: button::State::new(),
+                }
         }
     }
 }

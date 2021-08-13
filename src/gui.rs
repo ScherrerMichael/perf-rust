@@ -19,7 +19,7 @@ use state::{
     pane::{Content, Context}
 };
 use events::perf::PerfEvent;
-use messages::main::Message;
+use messages::{main::Message, task::TaskMessage};
 use widgets::{panes, task};
 
 /// Run the Gui Launcher
@@ -104,6 +104,11 @@ impl Application for Gui {
                     Message::NewAppPressed => {
                         data_state.context = Context::NewEvent;
                         println!("new app pressed");
+                    }
+
+                    Message::TaskMessage(i, TaskMessage::Edit) => {
+                        data_state.context = Context::NewEvent;
+                        println!("task {} pressed", i)
                     }
 
                     Message::CommandSelected(PerfEvent::Stat) => {

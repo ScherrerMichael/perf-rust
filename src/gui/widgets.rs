@@ -35,18 +35,16 @@ pub mod panes {
 
             // fn loading_message<'a>() -> Element<'a, Message> {
              let task_list: Element<_> = if content.tasks.iter().count() > 0 {
-                 println!("inside tasks ceation!");
                         content.tasks
                         .iter_mut()
                         .enumerate()
-                        .fold(Column::new().spacing(20), |column, (i, task)| {
+                        .fold(Column::new().spacing(5), |column, (i, task)| {
                             column.push(task.view().map(move |message| {
                                 Message::TaskMessage(i, message)
                             }))
                         })
                         .into()
                 } else {
-                    println!("no tasks found :(, number found: {}", content.tasks.iter().count());
                     Column::new().into()
                 };
 
@@ -91,7 +89,7 @@ pub mod panes {
                 ))
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .padding(5),
+                .padding(10),
 
                 // data_pane will switch visual context based on outside events:
                 // Main: view data of running event (default)
@@ -224,11 +222,19 @@ pub mod panes {
 }
 
 pub mod task {
+    use iced::{
+        pane_grid, Element,
+        widget::{
+            Button, button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
+            TextInput,
+        },
+        Align, Length,
+    };
     use serde::{Deserialize, Serialize};
     use crate::gui::state::task::TaskState;
     use crate::gui::messages::task::TaskMessage;
     use crate::gui::events::perf;
-    use iced::{Element, widget::{button, Text}};
+    use crate::gui::style;
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     // Currently running or previously ran events
@@ -285,7 +291,7 @@ pub mod task {
                     program: task_program.to_string(),
                     command: command,
 
-                    state: TaskState::Idle {
+                    state: TaskState {
                         edit_button: button::State::new(),
                     }
                 }
@@ -308,11 +314,17 @@ pub mod task {
         }
 
         pub fn view(&mut self) -> Element<TaskMessage> {
-            match &mut self.state{
-                TaskState::Idle {edit_button} => {
-                    Text::new("testing..").into()
-                }
-            }
+            let task_title = format!("{} {}", self.event, self.program);
+
+                    Column::with_children(vec![
+                        Button::new(&mut self.state.edit_button,Text::new(task_title))
+                        .style(style::widget::Button {})
+                        .on_press(TaskMessage::Edit)
+                        .width(Length::FillPortion(100))
+                        .into()
+                    ])
+                    .into()
+
         }
     }
 
@@ -323,9 +335,7 @@ pub mod task {
                 program: String::default(),
                 options: String::default(),
                 command: String::default(),
-                state: TaskState::Idle {
-                    edit_button: button::State::new(),
-                }
+                state: TaskState::default(),
             }
         }
     }
