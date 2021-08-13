@@ -1,21 +1,21 @@
 pub mod panes {
 
     use iced::{
-        pane_grid, Element,
+        pane_grid,
         widget::{
             Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
             TextInput,
         },
-        Align, Length,
+        Align, Element, Length,
     };
 
+    use super::task::Task;
     use crate::gui::events::perf::PerfEvent;
     use crate::gui::messages::main::Message;
     use crate::gui::state::pane;
     use crate::gui::state::pane::Context;
     use crate::gui::state::pane::PaneType;
     use crate::gui::style;
-    use super::task::Task;
 
     // pub fn panes(panes_state: Content)
     pub fn new<'a>(panes_state: &'a mut pane_grid::State<pane::Content>) -> PaneGrid<'a, Message> {
@@ -34,19 +34,21 @@ pub mod panes {
             );
 
             // fn loading_message<'a>() -> Element<'a, Message> {
-             let task_list: Element<_> = if content.tasks.iter().count() > 0 {
-                        content.tasks
-                        .iter_mut()
-                        .enumerate()
-                        .fold(Column::new().spacing(5), |column, (i, task)| {
-                            column.push(task.view().map(move |message| {
-                                Message::TaskMessage(i, message)
-                            }))
-                        })
-                        .into()
-                } else {
-                    Column::new().into()
-                };
+            let task_list: Element<_> = if content.tasks.iter().count() > 0 {
+                content
+                    .tasks
+                    .iter_mut()
+                    .enumerate()
+                    .fold(Column::new().spacing(5), |column, (i, task)| {
+                        column.push(
+                            task.view()
+                                .map(move |message| Message::TaskMessage(i, message)),
+                        )
+                    })
+                    .into()
+            } else {
+                Column::new().into()
+            };
 
             // Initialize scrollable list of elements
             let scrollable_list = Scrollable::new(&mut content.scroll)
@@ -78,15 +80,14 @@ pub mod panes {
                         .padding(5)
                         .width(Length::Fill)
                         .align_items(Align::Start)
-                        .push( scrollable_list.push(Column::with_children(vec![
-                            
+                        .push(scrollable_list.push(Column::with_children(vec![
                             Button::new(&mut content.create_button, Text::new("new"))
                                 .style(style::widget::Button {})
                                 .on_press(Message::NewAppPressed)
                                 .width(Length::FillPortion(100)).into(),
                                 task_list,
-                        ]))
-                ))
+                        ]))),
+                )
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .padding(10),
@@ -222,19 +223,19 @@ pub mod panes {
 }
 
 pub mod task {
+    use crate::gui::events::perf;
+    use crate::gui::messages::task::TaskMessage;
+    use crate::gui::state::task::TaskState;
+    use crate::gui::style;
     use iced::{
-        pane_grid, Element,
+        pane_grid,
         widget::{
-            Button, button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable, Space, Text,
-            TextInput,
+            button, Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable,
+            Space, Text, TextInput,
         },
-        Align, Length,
+        Align, Element, Length,
     };
     use serde::{Deserialize, Serialize};
-    use crate::gui::state::task::TaskState;
-    use crate::gui::messages::task::TaskMessage;
-    use crate::gui::events::perf;
-    use crate::gui::style;
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     // Currently running or previously ran events
@@ -243,14 +244,17 @@ pub mod task {
         program: String,
         options: String,
         pub command: String,
-        
+
         #[serde(skip)]
         state: TaskState,
     }
 
-    impl Task{
-        pub fn new(event: Option<perf::PerfEvent>, options: Option<String>, program: Option<String>)
-         -> Result<Task, &'static str> {
+    impl Task {
+        pub fn new(
+            event: Option<perf::PerfEvent>,
+            options: Option<String>,
+            program: Option<String>,
+        ) -> Result<Task, &'static str> {
             let mut command = String::new();
             let mut task_event = perf::PerfEvent::default();
             let mut task_options = String::new();
@@ -260,21 +264,17 @@ pub mod task {
                     command.push_str(res.as_str());
                     task_event = res;
                 }
-                None => {
-                    return Err("No event.")
-                }
+                None => return Err("No event."),
             }
             match options {
                 Some(res) => {
                     command.push_str(res.as_str());
-                    if task_event == perf::PerfEvent::Stat{
-                    command.push_str(" ");
+                    if task_event == perf::PerfEvent::Stat {
+                        command.push_str(" ");
                     }
                     task_options = res;
                 }
-                None => {
-                    return Err("No options.")
-                }
+                None => return Err("No options."),
             }
             match program {
                 Some(res) => {
@@ -284,18 +284,16 @@ pub mod task {
                 None => {}
             }
 
-            Ok(
-                Task{
-                    event: task_event,
-                    options: task_options.to_string(),
-                    program: task_program.to_string(),
-                    command: command,
+            Ok(Task {
+                event: task_event,
+                options: task_options.to_string(),
+                program: task_program.to_string(),
+                command: command,
 
-                    state: TaskState {
-                        edit_button: button::State::new(),
-                    }
-                }
-            )
+                state: TaskState {
+                    edit_button: button::State::new(),
+                },
+            })
         }
 
         fn update(&mut self, message: TaskMessage) {
@@ -309,28 +307,27 @@ pub mod task {
                 TaskMessage::Run => {
                     println!("running task")
                 }
-
             }
         }
 
         pub fn view(&mut self) -> Element<TaskMessage> {
             let task_title = format!("{} {}", self.event, self.program);
 
-                    Column::with_children(vec![
-                        Button::new(&mut self.state.edit_button,Text::new(task_title))
-                        .style(style::widget::Button {})
-                        .on_press(TaskMessage::Run)
-                        .width(Length::FillPortion(100))
-                        .into()
-                    ])
-                    .into()
-
+            Column::with_children(vec![Button::new(
+                &mut self.state.edit_button,
+                Text::new(task_title),
+            )
+            .style(style::widget::Button {})
+            .on_press(TaskMessage::Run)
+            .width(Length::FillPortion(100))
+            .into()])
+            .into()
         }
     }
 
-    impl Default for Task{
+    impl Default for Task {
         fn default() -> Self {
-            Task{
+            Task {
                 event: perf::PerfEvent::default(),
                 program: String::default(),
                 options: String::default(),
@@ -343,7 +340,7 @@ pub mod task {
     /// Provide Tasks as String data types
     impl std::fmt::Display for Task {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f,"({}), {}", self.event, self.program)
+            write!(f, "({}), {}", self.event, self.program)
         }
     }
 }

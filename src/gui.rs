@@ -1,9 +1,7 @@
 //! Gui driver
 use iced::{
     executor, pane_grid,
-    widget::{
-        Column, Container, Text,
-    },
+    widget::{Column, Container, Text},
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
 
@@ -13,13 +11,13 @@ mod state;
 mod style;
 mod widgets;
 
-use state::{
-    main::State,
-    save_load::SavedState, 
-    pane::{Content, Context}
-};
 use events::perf::PerfEvent;
 use messages::{main::Message, task::TaskMessage};
+use state::{
+    main::State,
+    pane::{Content, Context},
+    save_load::SavedState,
+};
 use widgets::{panes, task};
 
 /// Run the Gui Launcher
@@ -50,44 +48,38 @@ impl Application for Gui {
         String::from("Ruperf")
     }
     /// Update Gui based on recieved Message flags
-    fn update(
-        &mut self,
-        message: Self::Message,
-        _clipboard: &mut Clipboard,
-    ) -> Command<Message> {
+    fn update(&mut self, message: Self::Message, _clipboard: &mut Clipboard) -> Command<Message> {
         match self {
             // Update Loading consumed for Gui
             // then changed to loaded based on
             // Loading function
             Gui::Loading => {
-            match message {
-                Message::Loaded(Ok(state)) => {
-                    //tasks are loaded here
-                    *self = Gui::Loaded(State {
-                        tasks: state.tasks,
-                        ..State::default()
-                    });
-                }
-                // When load file is not found
-                // set state to default
-                Message::Loaded(Err(_)) => {
-                    *self = Gui::Loaded(State::default());
+                match message {
+                    Message::Loaded(Ok(state)) => {
+                        //tasks are loaded here
+                        *self = Gui::Loaded(State {
+                            tasks: state.tasks,
+                            ..State::default()
+                        });
+                    }
+                    // When load file is not found
+                    // set state to default
+                    Message::Loaded(Err(_)) => {
+                        *self = Gui::Loaded(State::default());
+                    }
+
+                    _ => {}
                 }
 
-                _ => {}
+                Command::none()
             }
-
-            Command::none()
-        }
 
             // When Gui is loaded prepare to recieve message
             // callbacks from children widgets
             Gui::Loaded(state) => {
-
                 let mut saved = false;
 
                 let mut data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
-
 
                 match message {
                     Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
@@ -107,8 +99,7 @@ impl Application for Gui {
                     }
 
                     Message::TaskMessage(i, TaskMessage::Run) => {
-                        run_program(&state.tasks[i], data_state)
-                        .expect("error");
+                        run_program(&state.tasks[i], data_state).expect("error");
                     }
 
                     Message::CommandSelected(PerfEvent::Stat) => {
@@ -169,7 +160,6 @@ impl Application for Gui {
                     Message::LaunchCommand => {
                         match data_state.selected_command {
                             PerfEvent::Stat => {
-
                                 let task = task::Task::new(
                                     Some(PerfEvent::Stat),
                                     Some(data_state.get_options().to_string()),
@@ -178,15 +168,13 @@ impl Application for Gui {
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(&t, data_state)
-                                        .expect("error");
+                                        run_program(&t, data_state).expect("error");
                                         state.tasks.push(t);
                                     }
                                     Err(s) => {
                                         println!("Error: {}", s);
                                     }
                                 }
-
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
@@ -212,13 +200,12 @@ impl Application for Gui {
                                 let task = task::Task::new(
                                     Some(PerfEvent::Test),
                                     Some(data_state.get_options().to_string()),
-                                    None
+                                    None,
                                 );
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(&t, data_state)
-                                        .expect("error");
+                                        run_program(&t, data_state).expect("error");
                                         state.tasks.push(t);
                                     }
                                     Err(s) => {
@@ -245,7 +232,7 @@ impl Application for Gui {
                     state.dirty = true;
                 }
 
-                if state.dirty && !state.saving{
+                if state.dirty && !state.saving {
                     state.dirty = false;
                     state.saving = true;
 
@@ -266,8 +253,12 @@ impl Application for Gui {
     fn view(&mut self) -> Element<Self::Message> {
         match self {
             Gui::Loading => loading_message(),
-            Gui::Loaded(State { panes_state, tasks, task_pane,..}) => {
-
+            Gui::Loaded(State {
+                panes_state,
+                tasks,
+                task_pane,
+                ..
+            }) => {
                 let task_pane = panes_state.get_mut(&task_pane).unwrap();
 
                 task_pane.tasks = tasks.to_vec();
@@ -308,10 +299,10 @@ fn loading_message<'a>() -> Element<'a, Message> {
 /// Error type for save function
 pub enum ProgramError {
     PerfEvent,
-    Program(String)
+    Program(String),
 }
 
-fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), ProgramError>{
+fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), ProgramError> {
     use std::process::Command;
     use std::str;
 
@@ -319,13 +310,13 @@ fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), Progra
     //with command: test
     let run_command = &task.command;
 
-            // run_command.push_str("stat");
-            // run_command.push_str(data_state.get_options().as_str());
-            // run_command.push_str(" ");
-            // run_command.push_str(data_state.input_value.as_str());
+    // run_command.push_str("stat");
+    // run_command.push_str(data_state.get_options().as_str());
+    // run_command.push_str(" ");
+    // run_command.push_str(data_state.input_value.as_str());
 
-            // run_command.push_str("test");
-            // run_command.push_str(data_state.get_options().as_str());
+    // run_command.push_str("test");
+    // run_command.push_str(data_state.get_options().as_str());
 
     println!("splitted: {:?}", run_command);
 

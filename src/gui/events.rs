@@ -24,8 +24,7 @@ pub mod perf {
             PerfEvent::Top,
         ];
 
-        pub fn as_str(&self) -> &'static str
-        {
+        pub fn as_str(&self) -> &'static str {
             match self {
                 PerfEvent::Stat => "stat",
                 PerfEvent::Test => "test",
@@ -63,6 +62,4 @@ pub mod perf {
             )
         }
     }
-
-    
 }

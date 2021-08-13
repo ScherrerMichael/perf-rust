@@ -1,8 +1,7 @@
 pub mod main {
     use super::pane::*;
-    use iced::pane_grid::{Pane, Split, self};
     use crate::gui::widgets::task::Task;
-
+    use iced::pane_grid::{self, Pane, Split};
 
     /// State for Gui
     pub struct State {
@@ -25,7 +24,8 @@ pub mod main {
 
             // First pane and first state is created here:
             // task Pane, panes_state
-            let (mut panes_state, task_pane) = pane_grid::State::new(Content::new(PaneType::Task, &tasks));
+            let (mut panes_state, task_pane) =
+                pane_grid::State::new(Content::new(PaneType::Task, &tasks));
 
             // Second pane and first split is created here:
             // data_pane, vert_split
@@ -49,7 +49,6 @@ pub mod main {
 
             panes_state.resize(&vert_split, 0.17);
             panes_state.resize(&horz_split, 0.88);
-
 
             State {
                 tasks,
@@ -75,7 +74,7 @@ pub mod pane {
     /// States of all panes within the pane grid
     // every pane state must be held here
     use iced::{button, pick_list, scrollable, text_input, Element};
-#[derive(Debug)]
+    #[derive(Debug)]
     pub struct Content {
         pub tasks: Vec<Task>,
         pub input_value: String,
@@ -123,10 +122,10 @@ pub mod pane {
 
             match self.selected_command {
                 perf::PerfEvent::Stat => {
-                    if self.launch_options.cycles{
+                    if self.launch_options.cycles {
                         res.push_str(" --event cycles");
                     }
-                    if self.launch_options.instructions{
+                    if self.launch_options.instructions {
                         res.push_str(" --event instructions");
                     }
                 }
@@ -188,7 +187,7 @@ pub mod pane {
 }
 
 pub mod task {
-    use iced::{widget::button};
+    use iced::widget::button;
 
     #[derive(Debug, Clone)]
     pub struct TaskState {
@@ -197,18 +196,18 @@ pub mod task {
 
     impl Default for TaskState {
         fn default() -> Self {
-                TaskState{
-                    edit_button: button::State::new(),
-                }
+            TaskState {
+                edit_button: button::State::new(),
+            }
         }
     }
 }
 
 pub mod save_load {
-    use crate::gui::widgets::task::Task;
-    use serde::{Deserialize, Serialize};
-    use iced::pane_grid;
     use crate::gui::state::pane::Content;
+    use crate::gui::widgets::task::Task;
+    use iced::pane_grid;
+    use serde::{Deserialize, Serialize};
 
     //customized from iced todo example.
     // source: https://github.com/hecrj/iced/blob/0.3/examples/todos/src/main.rs

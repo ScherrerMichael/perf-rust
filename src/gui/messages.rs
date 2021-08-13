@@ -1,8 +1,8 @@
 pub mod main {
+    use super::task::TaskMessage;
     use crate::gui::events::perf::PerfEvent;
     use crate::gui::state::*;
     use crate::gui::widgets::task::Task;
-    use super::task::TaskMessage;
     use iced::pane_grid;
     /// Messages to be sent to the parent widget from
     /// other child widgets, and consumed on update
