@@ -1,6 +1,6 @@
 /// Widget Style
 pub mod widget {
-    use iced::{button, checkbox, container, Background, Color, Vector};
+    use iced::{button, container, Background, Color, Vector};
 
     pub const SURFACE: Color = Color::from_rgb(
         0x54 as f32 / 255.0,
@@ -8,11 +8,8 @@ pub mod widget {
         0x4B as f32 / 255.0,
     );
 
-    pub const FRONT: Color = Color::from_rgb(
-        126.0 as f32 / 255.0,
-        130.0 as f32 / 255.0,
-        135.0 as f32 / 255.0,
-    );
+    pub const FRONT: Color =
+        Color::from_rgb(126.0_f32 / 255.0, 130.0_f32 / 255.0, 135.0_f32 / 255.0);
 
     pub struct Pane {
         pub is_focused: bool,
@@ -55,6 +52,21 @@ pub mod widget {
                 border_color: Color::BLACK,
                 text_color: Color::WHITE,
                 shadow_offset: Vector::new(1.0, 1.0),
+            }
+        }
+    }
+
+    pub struct Task {}
+
+    impl button::StyleSheet for Task {
+        fn active(&self) -> button::Style {
+            button::Style {
+                background: Some(Background::Color(SURFACE)),
+                border_radius: 1.3,
+                border_width: 1.0,
+                border_color: FRONT,
+                text_color: Color::WHITE,
+                shadow_offset: Vector::new(0.0, 1.0),
             }
         }
     }

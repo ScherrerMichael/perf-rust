@@ -73,7 +73,7 @@ pub mod pane {
 
     /// States of all panes within the pane grid
     // every pane state must be held here
-    use iced::{button, pick_list, scrollable, text_input, Element};
+    use iced::{button, pick_list, scrollable, text_input};
     #[derive(Debug)]
     pub struct Content {
         pub tasks: Vec<Task>,
@@ -96,7 +96,7 @@ pub mod pane {
 
     /// Initialize pane states to default values
     impl Content {
-        pub fn new(pane_type: PaneType, tasks: &Vec<Task>) -> Self {
+        pub fn new(pane_type: PaneType, tasks: &[Task]) -> Self {
             Content {
                 tasks: tasks.to_vec(),
                 input_value: String::new(),
@@ -204,9 +204,7 @@ pub mod task {
 }
 
 pub mod save_load {
-    use crate::gui::state::pane::Content;
     use crate::gui::widgets::task::Task;
-    use iced::pane_grid;
     use serde::{Deserialize, Serialize};
 
     //customized from iced todo example.
@@ -228,9 +226,9 @@ pub mod save_load {
     #[derive(Debug, Clone)]
     /// Error type for save function
     pub enum SaveError {
-        FileError,
-        WriteError,
-        FormatError,
+        File,
+        Write,
+        Format,
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -242,7 +240,7 @@ pub mod save_load {
             {
                 project_dirs.data_dir().into()
             } else {
-                std::env::current_dir().unwrap_or(std::path::PathBuf::new())
+                std::env::current_dir().unwrap_or_default()
             };
 
             path.push("tasks.json");
@@ -269,27 +267,26 @@ pub mod save_load {
         pub async fn save(self) -> Result<(), SaveError> {
             use async_std::prelude::*;
 
-            let json = serde_json::to_string_pretty(&self).map_err(|_| SaveError::FormatError)?;
+            let json = serde_json::to_string_pretty(&self).map_err(|_| SaveError::Format)?;
 
             let path = Self::path();
 
-            //here for debug purposes
-            println!("saving to {:?}", path);
+            //saves to /home/$user/.local/share/tasks/tasks.json
 
             if let Some(dir) = path.parent() {
                 async_std::fs::create_dir_all(dir)
                     .await
-                    .map_err(|_| SaveError::FileError)?;
+                    .map_err(|_| SaveError::File)?;
             }
 
             {
                 let mut file = async_std::fs::File::create(path)
                     .await
-                    .map_err(|_| SaveError::FileError)?;
+                    .map_err(|_| SaveError::File)?;
 
                 file.write_all(json.as_bytes())
                     .await
-                    .map_err(|_| SaveError::WriteError)?;
+                    .map_err(|_| SaveError::Write)?;
             }
 
             // This is a simple way to save at most once every couple seconds

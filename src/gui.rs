@@ -1,6 +1,6 @@
 //! Gui driver
 use iced::{
-    executor, pane_grid,
+    executor,
     widget::{Column, Container, Text},
     Align, Application, Clipboard, Command, Element, Length, Settings,
 };
@@ -82,53 +82,42 @@ impl Application for Gui {
                 let mut data_state = state.panes_state.get_mut(&state.data_pane).unwrap();
 
                 match message {
-                    Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
-                        if state.horz_split == split {
-                            // println!("horizontal split");
-                        } else {
-                            // println!("vertical split");
-                        }
-
-                        state.panes_state.resize(&split, ratio);
-                        // println!("split: {:?}, ratio: {}",split, ratio);
-                    }
-
                     Message::NewAppPressed => {
                         data_state.context = Context::NewEvent;
-                        println!("new app pressed");
+                        // println!("new app pressed");
                     }
 
-                    Message::TaskMessage(i, TaskMessage::Run) => {
-                        run_program(&state.tasks[i], data_state).expect("error");
+                    Message::RecieveTask(i, TaskMessage::Run) => {
+                        run_program(&state.tasks[i], data_state);
                     }
 
                     Message::CommandSelected(PerfEvent::Stat) => {
                         data_state.selected_command = PerfEvent::Stat;
-                        println!("stat selected")
+                        // println!("stat selected")
                     }
                     Message::CommandSelected(PerfEvent::Record) => {
                         data_state.selected_command = PerfEvent::Record;
-                        println!("record selected")
+                        // println!("record selected")
                     }
                     Message::CommandSelected(PerfEvent::Report) => {
                         data_state.selected_command = PerfEvent::Report;
-                        println!("report selected")
+                        // println!("report selected")
                     }
                     Message::CommandSelected(PerfEvent::Annotate) => {
                         data_state.selected_command = PerfEvent::Annotate;
-                        println!("annotate selected")
+                        // println!("annotate selected")
                     }
                     Message::CommandSelected(PerfEvent::Top) => {
                         data_state.selected_command = PerfEvent::Top;
-                        println!("top selected")
+                        // println!("top selected")
                     }
                     Message::CommandSelected(PerfEvent::Bench) => {
                         data_state.selected_command = PerfEvent::Bench;
-                        println!("bench selected")
+                        // println!("bench selected")
                     }
                     Message::CommandSelected(PerfEvent::Test) => {
                         data_state.selected_command = PerfEvent::Test;
-                        println!("test selected")
+                        // println!("test selected")
                     }
 
                     // Stat Options
@@ -162,13 +151,13 @@ impl Application for Gui {
                             PerfEvent::Stat => {
                                 let task = task::Task::new(
                                     Some(PerfEvent::Stat),
-                                    Some(data_state.get_options().to_string()),
+                                    Some(data_state.get_options()),
                                     Some(data_state.input_value.to_string()),
                                 );
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(&t, data_state).expect("error");
+                                        run_program(&t, data_state);
                                         state.tasks.push(t);
                                     }
                                     Err(s) => {
@@ -178,34 +167,29 @@ impl Application for Gui {
                             }
                             PerfEvent::Record => {
                                 //TODO: Add program here
-                                data_state.data = format!("Record output:");
                             }
                             PerfEvent::Report => {
                                 //TODO: Add program here
-                                data_state.data = format!("Report output:");
                             }
                             PerfEvent::Annotate => {
                                 //TODO: Add program here
-                                data_state.data = format!("Annotate output:");
                             }
                             PerfEvent::Top => {
                                 //TODO: Add program here
-                                data_state.data = format!("Top output:");
                             }
                             PerfEvent::Bench => {
                                 //TODO: Add program here
-                                data_state.data = format!("Bench output:");
                             }
                             PerfEvent::Test => {
                                 let task = task::Task::new(
                                     Some(PerfEvent::Test),
-                                    Some(data_state.get_options().to_string()),
+                                    Some(data_state.get_options()),
                                     None,
                                 );
 
                                 match task {
                                     Ok(t) => {
-                                        run_program(&t, data_state).expect("error");
+                                        run_program(&t, data_state);
                                         state.tasks.push(t);
                                     }
                                     Err(s) => {
@@ -259,7 +243,7 @@ impl Application for Gui {
                 task_pane,
                 ..
             }) => {
-                let task_pane = panes_state.get_mut(&task_pane).unwrap();
+                let task_pane = panes_state.get_mut(task_pane).unwrap();
 
                 task_pane.tasks = tasks.to_vec();
 
@@ -295,33 +279,12 @@ fn loading_message<'a>() -> Element<'a, Message> {
         .into()
 }
 
-#[derive(Debug, Clone)]
-/// Error type for save function
-pub enum ProgramError {
-    PerfEvent,
-    Program(String),
-}
-
-fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), ProgramError> {
+fn run_program(task: &task::Task, data_state: &mut Content) {
     use std::process::Command;
     use std::str;
 
-    //create another process, in this case run another perf-rust
-    //with command: test
-    let run_command = &task.command;
-
-    // run_command.push_str("stat");
-    // run_command.push_str(data_state.get_options().as_str());
-    // run_command.push_str(" ");
-    // run_command.push_str(data_state.input_value.as_str());
-
-    // run_command.push_str("test");
-    // run_command.push_str(data_state.get_options().as_str());
-
-    println!("splitted: {:?}", run_command);
-
     let output = Command::new("./ruperf")
-        .args(task.command.split(" "))
+        .args(task.command.split(' '))
         .output()
         .expect("failed to execute process");
 
@@ -339,8 +302,4 @@ fn run_program(task: &task::Task, data_state: &mut Content) -> Result<(), Progra
 
     //output to data pane
     data_state.data = s.to_string();
-
-    println!("output: {}", s);
-
-    Ok(())
 }

@@ -9,7 +9,6 @@ pub mod panes {
         Align, Element, Length,
     };
 
-    use super::task::Task;
     use crate::gui::events::perf::PerfEvent;
     use crate::gui::messages::main::Message;
     use crate::gui::state::pane;
@@ -18,8 +17,8 @@ pub mod panes {
     use crate::gui::style;
 
     // pub fn panes(panes_state: Content)
-    pub fn new<'a>(panes_state: &'a mut pane_grid::State<pane::Content>) -> PaneGrid<'a, Message> {
-        let panes = PaneGrid::new(panes_state, |pane, content| {
+    pub fn new(panes_state: &'_ mut pane_grid::State<pane::Content>) -> PaneGrid<'_, Message> {
+        PaneGrid::new(panes_state, |_pane, content| {
             let title = Text::new("");
 
             // Title of pane
@@ -34,7 +33,7 @@ pub mod panes {
             );
 
             // fn loading_message<'a>() -> Element<'a, Message> {
-            let task_list: Element<_> = if content.tasks.iter().count() > 0 {
+            let task_list: Element<_> = if !content.tasks.is_empty() {
                 content
                     .tasks
                     .iter_mut()
@@ -42,7 +41,7 @@ pub mod panes {
                     .fold(Column::new().spacing(5), |column, (i, task)| {
                         column.push(
                             task.view()
-                                .map(move |message| Message::TaskMessage(i, message)),
+                                .map(move |message| Message::RecieveTask(i, message)),
                         )
                     })
                     .into()
@@ -61,7 +60,7 @@ pub mod panes {
             let input = TextInput::new(
                 &mut content.input,
                 "",
-                &mut content.input_value,
+                &content.input_value,
                 Message::InputChanged,
             )
             .width(Length::from(200));
@@ -85,6 +84,7 @@ pub mod panes {
                                 .style(style::widget::Button {})
                                 .on_press(Message::NewAppPressed)
                                 .width(Length::FillPortion(100)).into(),
+                                Rule::horizontal(10).into(),
                                 task_list,
                         ]))),
                 )
@@ -210,15 +210,12 @@ pub mod panes {
                         .spacing(5)
                         .padding(5)
                         .width(Length::Fill)
-                        .align_items(Align::Center)
-                        .push(Text::new("Logs")),
+                        .align_items(Align::Center), // .push(Text::new("Logs")),
                 ),
             })
             .title_bar(title_bar)
             .style(style::widget::Pane { is_focused: false })
-        });
-
-        panes
+        })
     }
 }
 
@@ -228,12 +225,8 @@ pub mod task {
     use crate::gui::state::task::TaskState;
     use crate::gui::style;
     use iced::{
-        pane_grid,
-        widget::{
-            button, Button, Checkbox, Column, Container, PaneGrid, PickList, Rule, Scrollable,
-            Space, Text, TextInput,
-        },
-        Align, Element, Length,
+        widget::{button, Button, Column, Text},
+        Element, Length,
     };
     use serde::{Deserialize, Serialize};
 
@@ -256,8 +249,8 @@ pub mod task {
             program: Option<String>,
         ) -> Result<Task, &'static str> {
             let mut command = String::new();
-            let mut task_event = perf::PerfEvent::default();
-            let mut task_options = String::new();
+            let task_event: perf::PerfEvent;
+            let task_options: String;
             let mut task_program = String::new();
             match event {
                 Some(res) => {
@@ -270,44 +263,27 @@ pub mod task {
                 Some(res) => {
                     command.push_str(res.as_str());
                     if task_event == perf::PerfEvent::Stat {
-                        command.push_str(" ");
+                        command.push(' ');
                     }
                     task_options = res;
                 }
                 None => return Err("No options."),
             }
-            match program {
-                Some(res) => {
-                    command.push_str(res.as_str());
-                    task_program = res.to_string();
-                }
-                None => {}
+            if let Some(res) = program {
+                command.push_str(res.as_str());
+                task_program = res;
             }
 
             Ok(Task {
                 event: task_event,
-                options: task_options.to_string(),
-                program: task_program.to_string(),
-                command: command,
+                options: task_options,
+                program: task_program,
+                command,
 
                 state: TaskState {
                     edit_button: button::State::new(),
                 },
             })
-        }
-
-        fn update(&mut self, message: TaskMessage) {
-            match message {
-                TaskMessage::Edit => {
-                    println!("editing task")
-                }
-                TaskMessage::Delete => {
-                    println!("deleting task")
-                }
-                TaskMessage::Run => {
-                    println!("running task")
-                }
-            }
         }
 
         pub fn view(&mut self) -> Element<TaskMessage> {
@@ -317,7 +293,7 @@ pub mod task {
                 &mut self.state.edit_button,
                 Text::new(task_title),
             )
-            .style(style::widget::Button {})
+            .style(style::widget::Task {})
             .on_press(TaskMessage::Run)
             .width(Length::FillPortion(100))
             .into()])
