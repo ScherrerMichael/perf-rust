@@ -1,4 +1,14 @@
 //! Gui driver
+//! # GUI driver.
+//! <p> Usage: <em> ruperf gui [COMMAND] </em>
+//! where COMMAND is one of: </p>
+//! <ul>
+//! <li>test</li>
+//! <li>stat</li>
+//! </ul>
+
+extern crate structopt;
+use structopt::StructOpt;
 use iced::{
     executor,
     widget::{Column, Container, Text},
@@ -21,7 +31,7 @@ use state::{
 use widgets::{panes, task};
 
 /// Run the Gui Launcher
-pub fn run_gui() -> iced::Result {
+pub fn run_gui(_options: &GuiOptions) -> iced::Result {
     Gui::run(Settings::default())
 }
 
@@ -30,6 +40,10 @@ enum Gui {
     Loading,
     Loaded(State),
 }
+
+/// Configuration settings for running the GUI
+#[derive(Debug, StructOpt)]
+pub struct GuiOptions {}
 
 /// Provide methods for Gui renderer
 impl Application for Gui {

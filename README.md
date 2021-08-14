@@ -1,87 +1,89 @@
-# Ruperf
+## Overview
 
-Timothy Maloney, Briana Oursler, Greg Hairfield, Sam Little, Michael Scherrer 2021
-
-Ruperf is a Rust adaptation of the [linux perf command][1], also called perf_events.
-
-## Goals
-
-Our goal is to create a fast, reliable translation of `perf` in the Rust language with a least a couple software events implemented.
-
-
-## RoadMap
-
-Wk 3
-*Prototype*
-
-Implement Rust support for necessary Linux system calls in order to return a hardware event. These are
-- `perf_event_open`
-- `ioctl`
-- `read`
-
-Confirm by returning the `cycles` event.
-
-Wk 6
-*Minumum Viable Product* (MVP)
-
-Hardware events
-- cpu-cycles OR cycles
-- instructions 
-- L1-dcache-loads
-
-Software events
-- context switches
-- cpu-clock
-- task-clock
-
-Wk 8
-*Other support*
-
-Minimal support to proof of concept these high-level commands.
-- `perf-test`: runs assorted sanity tests
-- `perf stat`: gathers performance counter statistics
-- `perf record`: records a running program and outputs results to a file
-- `perf report`: formats results in a friendly way.
-
-The Future
-*Extend support*
-- Continue to build on `test`, `stat`, and `record` coverage. `Report` gathers
-  statistics about performance and returns interesting tables or graphs.
-- Support Windows and Mac platforms.
-- Custom support for Rust program profiling.
-
+See the [overview](https://HOMS-OSS.github.io/ruperf/docs/overview) for an introduction to the project.
 
 ## Requirements
 
-Rust is required for this project.
+Rust is required for this project. To download Rustup and install Rust:
 
-It is recommended to download Rustup and install Rust.
+`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
-In terminal type:
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-More information about installing Rust [here][3].
+[More on installing Rust][3].
 
 Linux 5.x+ is required to run this project.
 
+## Build
+
+To build this project:
+
+- Checkout `main` branch from github using `git clone`.
+- From top-level directory run `cargo build`. 
+  - For best profiling specify `cargo build --release` as cargo will default to `debug`.
+
+To build a sample program:
+- ```bash
+cargo build -p file-io
+```
+
+- ```bash
+cargo build -p fp-calc
+```
+
+## Install
+
+To install this project:
+
+- With the project repository downloaded, run `cargo install --path *ruperf_path*` where `*ruperf_path*` is the path to the ruperf repository on your machine.
+- For configuration information about `cargo install` including information about how to specify installation location, etc see [documentation][8]
+- Another option is to build the code using `cargo build` and then `cd` into the `target` directory and select the target.
+
+## Run
+
+- See ```./ruperf --help```
+
+- Examples:
+  - ```bash
+  ./ruperf stat -e cycles -e instructions -e task-clock -e L1D-cache-reads ls -a
+  ```
+  - ```bash
+  ./ruperf test --json
+  ```
+  - ``` bash
+  ./ruperf gui
+  ```
+- See our rustdocs for more documentation by running ```cargo doc --no-deps --open``` in the ruperf repository.
+
+## Verification
+
+Verification is done through a combination of `cargo test`, manual inspection comparing output of `perf stat` with output of `ruperf` on programs as documented in pull request history, and through inspection of contributor code.
+
+## Demo/Walkthrough
+
+
+
+## Permissions
+
+This tool uses the `perf_event_open()` system call, which requires some special permissions. 
+While our tool currently checks if `perf_event_paranoid` is equal to 0,
+this is less than ideal is some situations. A way around this is to change
+the capabilities of the `ruperf` executable using [`setcap`](https://man7.org/linux/man-pages/man8/setcap.8.html). 
+
+For Linux 5.8+, use `CAP_PERFMON`; otherwise use `CAP_SYSADMIN`.
+
 ## Contributing Guidelines
 
-Ruperf is an open source project and is open to recieving contributions!
+`ruperf` is an open source project and is open to recieving contributions!
 
-Please see [`CONTRIBUTING.md`](https://github.com/HOMS-OSS/ruperf/blob/main/CONTRIBUTING.md)
+Please see [`CONTRIBUTING`](https://github.com/HOMS-OSS/ruperf/blob/main/CONTRIBUTING.md)
 
 ## Code of Conduct
 
- We are committed to providing a friendly, safe and welcoming environment for all, regardless of level of experience, gender identity and expression, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, nationality, or other similar characteristic.
+We are committed to providing a friendly, safe and welcoming environment for all, 
+regardless of level of experience, gender identity and expression, 
+sexual orientation, disability, personal appearance, 
+body size, race, ethnicity, age, religion, nationality, or other similar characteristic.
 
- More from [Rust Community Code of Conduct][4]
-
-## Further Reading
-
-See `whitepaper.tex`
+[Rust Community Code of Conduct][4]
 
 ## References
 
@@ -94,17 +96,17 @@ See `whitepaper.tex`
 ## License
 [Gplv2][2]
 
-
-
+### [Core Team](https://HOMS-OSS.github.io/ruperf/docs/team)
 
 
 
 
 
 [1]:https://perf.wiki.kernel.org/index.php/Main_Page
-[2]:https://choosealicense.com/licenses/gpl-2.0/
+[2]:https://github.com/HOMS-OSS/ruperf/blob/main/LICENSE
 [3]:https://www.rust-lang.org/tools/install
 [4]:https://www.rust-lang.org/policies/code-of-conduct
 [5]:https://perf.wiki.kernel.org/index.php/Tutorial
 [6]:https://nnethercote.github.io/perf-book/introduction.html
 [7]:http://www.brendangregg.com/flamegraphs.html
+[8]: https://doc.rust-lang.org/cargo/commands/cargo-install.html
